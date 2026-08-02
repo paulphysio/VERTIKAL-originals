@@ -1,4 +1,5 @@
-import { resend, FROM_EMAIL, getAdminEmails } from './resend'
+import { resend, FROM_EMAIL } from './resend'
+import { getAdminEmails } from '@/lib/actions/email'
 import {
   orderConfirmationTemplate,
   orderStatusUpdateTemplate,
