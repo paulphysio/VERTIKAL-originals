@@ -37,7 +37,7 @@ export default function AdminProductsPage() {
           .from('products')
           .select(`*, categories!category_id(name), product_variants(*)`)
           .order('created_at', { ascending: false }),
-        supabase.from('categories').select('*').eq('is_active', true)
+        supabase.from('categories').select('*')
       ])
 
       if (products) setProducts(products)
@@ -54,16 +54,45 @@ export default function AdminProductsPage() {
   )
 
   const deleteProduct = async (productId: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return
+    if (!confirm('Are you sure you want to delete this product? This will also delete all associated images.')) return
 
-    const { error } = await supabase
-      .from('products')
-      .delete()
-      .eq('id', productId)
+    try {
+      // Fetch product images to delete from storage
+      const { data: images } = await supabase
+        .from('product_images')
+        .select('url')
+        .eq('product_id', productId)
 
-    if (!error) {
-      setProducts(products.filter((p) => p.id !== productId))
-    } else {
+      // Delete images from storage
+      if (images && images.length > 0) {
+        const filePaths = images.map((img: any) => {
+          const url = new URL(img.url)
+          const pathParts = url.pathname.split('/')
+          return pathParts[pathParts.length - 1]
+        })
+
+        const { error: storageError } = await supabase.storage
+          .from('product-images')
+          .remove(filePaths)
+
+        if (storageError) {
+          console.error('Error deleting images from storage:', storageError)
+        }
+      }
+
+      // Delete product from database (cascade will handle variants and images)
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId)
+
+      if (!error) {
+        setProducts(products.filter((p) => p.id !== productId))
+      } else {
+        alert('Failed to delete product')
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error)
       alert('Failed to delete product')
     }
   }
@@ -527,7 +556,7 @@ export default function AdminProductsPage() {
                           <label className="block font-mono text-[11px] font-bold uppercase mb-2">Price Override</label>
                           <input
                             type="number"
-                            value={variant.price}
+                            value={variant.price ?? ''}
                             onChange={(e) => handleVariantChange(index, 'price', e.target.value)}
                             placeholder="Leave empty for base price"
                             className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral"
@@ -537,7 +566,7 @@ export default function AdminProductsPage() {
                           <label className="block font-mono text-[11px] font-bold uppercase mb-2">Stock</label>
                           <input
                             type="number"
-                            value={variant.stock}
+                            value={variant.stock ?? ''}
                             onChange={(e) => handleVariantChange(index, 'stock', e.target.value)}
                             placeholder="0"
                             className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral"

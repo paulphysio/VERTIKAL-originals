@@ -9,7 +9,7 @@ import JoinList from "@/components/layout/join-list";
 export default async function HomePage() {
   const [products, categories] = await Promise.all([
     getFeaturedProducts(8),
-    getTopCategories(4),
+    getTopCategories(),
   ]);
   // eslint-disable-next-line react-hooks/purity -- Server Component, runs once per request, never re-renders on the client
   const now = Date.now();
@@ -24,19 +24,18 @@ export default async function HomePage() {
             NEW ARRIVALS — SHOP NOW
           </div>
           <h1 className="font-display text-[15vw] uppercase leading-[0.86] sm:text-[64px] md:text-[76px] lg:text-[92px]">
-            Fresh
+            We're
             <br />
-            <span className="text-coral">styles</span>
+            <span className="text-coral">Up</span>
             <br />
             <span className="text-paper [-webkit-text-stroke:2px_var(--color-ink)]">
-              loaded
+              Always
             </span>
           </h1>
-          <p className="mt-6 max-w-md text-[15px] text-ink/70 sm:text-base">
-            Quality clothing for everyday wear. We keep our shelves stocked with
-            fresh drops and restock your favorites. Style that fits your life,
-            prices that fit your budget.
-          </p>
+          {/* <p className="mt-6 max-w-md text-[15px] text-ink/70 sm:text-base">
+            No cap, just fits. We keep the rotation fresh with pieces that hit different.
+            Your wardrobe, upgraded.
+          </p> */}
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               href="/products"
@@ -92,16 +91,16 @@ export default async function HomePage() {
       <Marquee
         variant="acid"
         items={[
-          "NEW ARRIVALS WEEKLY — FREE SHIPPING OVER ₦10,000 — QUALITY GUARANTEED — EASY RETURNS",
+          "NEW ARRIVALS WEEKLY — QUALITY GUARANTEED",
         ]}
       />
 
       <div className="flex flex-col divide-y-2 divide-ink border-b-2 border-ink sm:flex-row sm:divide-x-2 sm:divide-y-0">
         {[
-          ["01", "Free shipping over ₦10,000"],
-          ["02", "Paystack + bank transfer"],
-          ["03", "Dispatch within 48hrs"],
-          ["04", "Returns within 7 days"],
+          ["01", "Paystack + bank transfer"],
+          ["02", "Dispatch within 48hrs"],
+          ["03", "Secure payments"],
+          ["04", "Order tracking"],
         ].map(([n, label]) => (
           <div key={n} className="flex-1 px-5 py-5 font-mono text-[12px] tracking-wide sm:px-6">
             <span className="mr-2 font-bold text-coral">{n}</span>

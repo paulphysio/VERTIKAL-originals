@@ -42,14 +42,14 @@ export default function TermsPage() {
 
           <h2 className="text-2xl font-bold mt-8 mb-4">Shipping and Delivery</h2>
           <p className="text-gray-600 mb-6">
-            Shipping times and costs vary based on location. Free shipping is available 
-            for orders over ₦10,000. Please refer to our shipping policy for more details.
+            Shipping times and costs vary based on location. Orders are typically dispatched 
+            within 48 hours. Please refer to our shipping policy for more details.
           </p>
 
-          <h2 className="text-2xl font-bold mt-8 mb-4">Returns and Refunds</h2>
+          <h2 className="text-2xl font-bold mt-8 mb-4">Order Tracking</h2>
           <p className="text-gray-600 mb-6">
-            We offer a 30-day return policy for unused items in their original packaging. 
-            Refunds are processed within 5-7 business days of receiving the returned item.
+            You can track your order status through your account. We'll send you updates 
+            when your order is processed and shipped.
           </p>
 
           <h2 className="text-2xl font-bold mt-8 mb-4">User Accounts</h2>

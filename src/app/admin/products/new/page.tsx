@@ -11,6 +11,7 @@ export default function NewProductPage() {
   
   const [categories, setCategories] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -21,12 +22,12 @@ export default function NewProductPage() {
     is_featured: false,
   })
   const [variants, setVariants] = useState([
-    { size: '', color: '', color_hex: '', price: '', stock: '', image_url: '' },
+    { size: '', color: '', color_hex: '', price: '', stock: '', image_urls: [] as string[] },
   ])
 
   useEffect(() => {
     const fetchCategories = async () => {
-      const { data } = await supabase.from('categories').select('*').eq('is_active', true)
+      const { data } = await supabase.from('categories').select('*')
       setCategories(data || [])
     }
     fetchCategories()
@@ -47,7 +48,7 @@ export default function NewProductPage() {
   }
 
   const addVariant = () => {
-    setVariants([...variants, { size: '', color: '', color_hex: '', price: '', stock: '', image_url: '' }])
+    setVariants([...variants, { size: '', color: '', color_hex: '', price: '', stock: '', image_urls: [] }])
   }
 
   const removeVariant = (index: number) => {
@@ -61,6 +62,47 @@ export default function NewProductPage() {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '')
+  }
+
+  const uploadImage = async (file: File): Promise<string> => {
+    setUploading(true)
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Date.now()}.${fileExt}`
+      const { data, error } = await supabase.storage
+        .from('product-images')
+        .upload(fileName, file)
+
+      if (error) throw error
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(fileName)
+
+      return publicUrl
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      throw error
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleImageUpload = async (index: number, file: File) => {
+    try {
+      const url = await uploadImage(file)
+      const newVariants = [...variants]
+      newVariants[index].image_urls.push(url)
+      setVariants(newVariants)
+    } catch (error) {
+      alert('Failed to upload image')
+    }
+  }
+
+  const removeImage = (variantIndex: number, imageIndex: number) => {
+    const newVariants = [...variants]
+    newVariants[variantIndex].image_urls = newVariants[variantIndex].image_urls.filter((_, i) => i !== imageIndex)
+    setVariants(newVariants)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,7 +137,7 @@ export default function NewProductPage() {
           color_hex: v.color_hex,
           price: v.price ? parseFloat(v.price) : null,
           stock: parseInt(v.stock) || 0,
-          image_url: v.image_url,
+          image_url: v.image_urls[0] || null,
         }))
 
       if (variantData.length > 0) {
@@ -104,6 +146,25 @@ export default function NewProductPage() {
           .insert(variantData)
 
         if (variantError) throw variantError
+      }
+
+      // Create product images from all variant images
+      const allImages = variants.flatMap((v, variantIndex) =>
+        v.image_urls.map((url, imageIndex) => ({
+          product_id: product.id,
+          url,
+          alt: `${formData.name} - ${v.color} ${v.size}`,
+          is_primary: variantIndex === 0 && imageIndex === 0,
+          sort_order: variantIndex * 10 + imageIndex,
+        }))
+      )
+
+      if (allImages.length > 0) {
+        const { error: imagesError } = await supabase
+          .from('product_images')
+          .insert(allImages)
+
+        if (imagesError) throw imagesError
       }
 
       router.push('/admin/products')
@@ -274,7 +335,7 @@ export default function NewProductPage() {
                   <label className="block font-mono text-[11px] font-bold uppercase mb-2">Price Override</label>
                   <input
                     type="text"
-                    value={variant.price}
+                    value={variant.price ?? ''}
                     onChange={(e) => handleVariantChange(index, 'price', e.target.value)}
                     placeholder="Leave empty for base price"
                     className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral"
@@ -284,21 +345,51 @@ export default function NewProductPage() {
                   <label className="block font-mono text-[11px] font-bold uppercase mb-2">Stock</label>
                   <input
                     type="text"
-                    value={variant.stock}
+                    value={variant.stock ?? ''}
                     onChange={(e) => handleVariantChange(index, 'stock', e.target.value)}
                     placeholder="0"
                     className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral"
                   />
                 </div>
                 <div>
-                  <label className="block font-mono text-[11px] font-bold uppercase mb-2">Image URL</label>
-                  <input
-                    type="text"
-                    value={variant.image_url}
-                    onChange={(e) => handleVariantChange(index, 'image_url', e.target.value)}
-                    placeholder="https://..."
-                    className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral"
-                  />
+                  <label className="block font-mono text-[11px] font-bold uppercase mb-2">Images</label>
+                  <div className="space-y-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) handleImageUpload(index, file)
+                      }}
+                      disabled={uploading}
+                      className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral"
+                    />
+                    {variants[index].image_urls.length > 0 && (
+                      <div className="space-y-2">
+                        {variants[index].image_urls.map((url, imgIdx) => (
+                          <div key={imgIdx} className="flex gap-2">
+                            <input
+                              type="text"
+                              value={url}
+                              onChange={(e) => {
+                                const newVariants = [...variants]
+                                newVariants[index].image_urls[imgIdx] = e.target.value
+                                setVariants(newVariants)
+                              }}
+                              className="flex-1 px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index, imgIdx)}
+                              className="px-3 border-2 border-ink text-coral hover:bg-coral hover:text-paper transition"
+                            >
+                              <X className="h-5 w-5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

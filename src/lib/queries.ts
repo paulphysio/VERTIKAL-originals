@@ -34,16 +34,16 @@ export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
   return data as unknown as Product[];
 }
 
-export async function getTopCategories(limit = 4): Promise<Category[]> {
+export async function getTopCategories(): Promise<Category[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("categories")
     .select("id, name, slug, image_url, parent_id")
     .is("parent_id", null)
-    .limit(limit);
+    .order("name");
 
   if (error || !data || data.length === 0) {
-    return DEMO_CATEGORIES.slice(0, limit);
+    return DEMO_CATEGORIES;
   }
   return data as Category[];
 }

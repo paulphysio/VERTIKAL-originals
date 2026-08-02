@@ -89,7 +89,7 @@ export default function ProductDetailPage() {
   }
 
   const primaryImage = product.product_images?.find((img: any) => img.is_primary)
-  const image = primaryImage || product.product_images?.[0]
+  const image = primaryImage || product.product_images?.[0] || selectedVariant?.image_url
   
   const sizes = [...new Set(product.product_variants?.map((v: any) => v.size) || [])] as string[]
   const colors = [...new Set(product.product_variants?.map((v: any) => v.color) || [])] as string[]
@@ -276,11 +276,11 @@ export default function ProductDetailPage() {
             </div>
             <div className="flex items-center gap-2 text-sm font-mono">
               <span className="text-coral">✓</span>
-              <span>7-day return policy</span>
+              <span>Secure checkout</span>
             </div>
             <div className="flex items-center gap-2 text-sm font-mono">
               <span className="text-coral">✓</span>
-              <span>Free shipping over ₦10,000</span>
+              <span>Order tracking available</span>
             </div>
           </div>
         </div>

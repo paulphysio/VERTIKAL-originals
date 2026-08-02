@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatPrice } from '@/lib/utils'
 import { Filter, X, Search, SlidersHorizontal } from 'lucide-react'
@@ -11,7 +11,7 @@ export default function ProductsPage({
 }: {
   searchParams: Promise<{ category?: string; featured?: string; search?: string }>
 }) {
-  const params = searchParams
+  const params = use(searchParams)
   const [products, setProducts] = useState<any[]>([])
   const [categories, setCategories] = useState<any[]>([])
   const [filteredProducts, setFilteredProducts] = useState<any[]>([])
@@ -19,7 +19,7 @@ export default function ProductsPage({
   const [showFilters, setShowFilters] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('')
   const [priceRange, setPriceRange] = useState({ min: '', max: '' })
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState(params.search || '')
   const [sortBy, setSortBy] = useState('newest')
   const supabase = createClient()
 
@@ -41,6 +41,16 @@ export default function ProductsPage({
 
     fetchData()
   }, [supabase])
+
+  // Set initial category from URL
+  useEffect(() => {
+    if (params.category && categories.length > 0) {
+      const category = categories.find((cat) => cat.slug === params.category)
+      if (category) {
+        setSelectedCategory(category.id)
+      }
+    }
+  }, [params.category, categories])
 
   useEffect(() => {
     let filtered = [...products]

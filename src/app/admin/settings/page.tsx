@@ -120,15 +120,6 @@ export default function AdminSettingsPage() {
                 className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral"
               />
             </div>
-            <div>
-              <label className="block font-mono text-[11px] font-bold uppercase mb-2">Free Shipping Threshold (₦)</label>
-              <input
-                type="number"
-                value={settings.freeShippingThreshold}
-                onChange={(e) => setSettings({ ...settings, freeShippingThreshold: e.target.value })}
-                className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral"
-              />
-            </div>
           </div>
         </div>
 
