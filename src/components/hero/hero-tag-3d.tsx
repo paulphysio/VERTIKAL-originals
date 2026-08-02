@@ -111,7 +111,6 @@ export default function HeroTag3D() {
     let lastX = 0;
     let autoSpin = !reducedMotion;
     let mouseX = 0;
-    let mouseY = 0;
 
     const onPointerDown = (e: PointerEvent) => {
       dragging = true;
@@ -130,7 +129,6 @@ export default function HeroTag3D() {
     const onMouseMove = (e: MouseEvent) => {
       const rect = mount.getBoundingClientRect();
       mouseX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-      mouseY = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
     };
     const onResize = () => {
       const size = getSize();
@@ -157,7 +155,6 @@ export default function HeroTag3D() {
         tagGroup.position.y = -0.4 + Math.sin(t * 0.8) * 0.08;
       }
       camera.position.x += (mouseX * 0.6 - camera.position.x) * 0.05;
-      camera.position.y += (-mouseY * 0.4 - camera.position.y) * 0.05;
       camera.lookAt(0, 0, 0);
       renderer.render(scene, camera);
     };
@@ -182,7 +179,7 @@ export default function HeroTag3D() {
   return (
     <div
       ref={mountRef}
-      className="relative h-full w-full touch-none"
+      className="relative h-full w-full"
       aria-label="Interactive 3D product tag — drag to spin"
       role="img"
     />

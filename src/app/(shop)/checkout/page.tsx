@@ -1,11 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCartStore } from '@/lib/store/cart'
 import { formatPrice } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { CreditCard, Upload, Check } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+
+declare global {
+  interface Window {
+    PaystackPop: any
+  }
+}
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -15,6 +21,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'paystack' | 'bank'>('paystack')
   const [receiptFile, setReceiptFile] = useState<File | null>(null)
+  const [paystackLoaded, setPaystackLoaded] = useState(false)
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -30,15 +37,30 @@ export default function CheckoutPage() {
   const shipping = subtotal >= 10000 ? 0 : 1000
   const total = subtotal + shipping
 
+  // Load Paystack script
+  useEffect(() => {
+    const script = document.createElement('script')
+    script.src = 'https://js.paystack.co/v1/inline.js'
+    script.onload = () => setPaystackLoaded(true)
+    document.body.appendChild(script)
+
+    return () => {
+      document.body.removeChild(script)
+    }
+  }, [])
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
   const handlePaystackPayment = async () => {
+    if (!formData.email || !formData.fullName || !formData.phone) {
+      alert('Please fill in all required fields')
+      return
+    }
+
     setLoading(true)
     try {
-      // In production, integrate Paystack here
-      // For now, we'll simulate the payment
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
@@ -46,7 +68,13 @@ export default function CheckoutPage() {
         return
       }
 
-      // Create order
+      const paystackPublicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
+      
+      if (!paystackPublicKey) {
+        throw new Error('Paystack public key not configured')
+      }
+
+      // Create order first
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -83,12 +111,52 @@ export default function CheckoutPage() {
 
       if (itemsError) throw itemsError
 
-      clearCart()
-      router.push(`/account/orders/${order.id}`)
+      // Initialize Paystack payment
+      const handler = window.PaystackPop.setup({
+        key: paystackPublicKey,
+        email: formData.email,
+        amount: total * 100, // Paystack expects amount in kobo
+        currency: 'NGN',
+        ref: `VERTIKAL-${order.id}-${Date.now()}`,
+        metadata: {
+          custom_fields: [
+            {
+              display_name: 'Order ID',
+              variable_name: 'order_id',
+              value: order.id
+            }
+          ]
+        },
+        callback: (response: any) => {
+          // Payment successful - update order status
+          supabase
+            .from('orders')
+            .update({ 
+              payment_status: 'paid',
+              payment_reference: response.reference
+            })
+            .eq('id', order.id)
+            .then(() => {
+              clearCart()
+              router.push(`/account/orders/${order.id}`)
+            })
+        },
+        onClose: () => {
+          // Payment window closed - update order status to cancelled
+          supabase
+            .from('orders')
+            .update({ payment_status: 'cancelled' })
+            .eq('id', order.id)
+            .then(() => {
+              setLoading(false)
+            })
+        }
+      })
+
+      handler.openIframe()
     } catch (error) {
       console.error('Payment error:', error)
       alert('Payment failed. Please try again.')
-    } finally {
       setLoading(false)
     }
   }

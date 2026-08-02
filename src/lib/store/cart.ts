@@ -23,11 +23,40 @@ interface CartStore {
   clearCart: () => Promise<void>
   getTotal: () => number
   getItemCount: () => number
+  mergeGuestCart: () => Promise<void>
+  saveToLocalStorage: () => void
+  loadFromLocalStorage: () => void
+  clearLocalStorage: () => void
 }
 
 export const useCartStore = create<CartStore>((set, get) => ({
   items: [],
   loading: false,
+  
+  saveToLocalStorage: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('guest_cart', JSON.stringify(get().items))
+    }
+  },
+  
+  loadFromLocalStorage: () => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('guest_cart')
+      if (stored) {
+        try {
+          set({ items: JSON.parse(stored) })
+        } catch (e) {
+          console.error('Error loading cart from localStorage:', e)
+        }
+      }
+    }
+  },
+  
+  clearLocalStorage: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('guest_cart')
+    }
+  },
   
   fetchCart: async () => {
     set({ loading: true })
@@ -35,7 +64,8 @@ export const useCartStore = create<CartStore>((set, get) => ({
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      set({ loading: false, items: [] })
+      get().loadFromLocalStorage()
+      set({ loading: false })
       return
     }
 
@@ -111,6 +141,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
       } else {
         set({ items: [...get().items, { ...item, id: crypto.randomUUID() }] })
       }
+      get().saveToLocalStorage()
       return
     }
 
@@ -168,6 +199,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
     if (!user) {
       // Fallback to localStorage for non-authenticated users
       set({ items: get().items.filter((i) => i.variantId !== variantId) })
+      get().saveToLocalStorage()
       return
     }
 
@@ -204,6 +236,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
           i.variantId === variantId ? { ...i, quantity } : i
         ),
       })
+      get().saveToLocalStorage()
       return
     }
 
@@ -242,6 +275,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
     
     if (!user) {
       set({ items: [] })
+      get().clearLocalStorage()
       return
     }
 
@@ -270,5 +304,65 @@ export const useCartStore = create<CartStore>((set, get) => ({
   
   getItemCount: () => {
     return get().items.reduce((count, item) => count + item.quantity, 0)
+  },
+  
+  mergeGuestCart: async () => {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) return
+    
+    // Load from localStorage first to ensure we have the guest items
+    get().loadFromLocalStorage()
+    
+    const localItems = get().items
+    if (localItems.length === 0) return
+    
+    // Get or create cart for user
+    let { data: cart } = await supabase
+      .from('carts')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
+
+    if (!cart) {
+      const { data: newCart } = await supabase
+        .from('carts')
+        .insert({ user_id: user.id })
+        .select()
+        .single()
+      cart = newCart
+    }
+
+    if (!cart) return
+
+    // Merge local items with database
+    for (const item of localItems) {
+      const { data: existingItem } = await supabase
+        .from('cart_items')
+        .select('*')
+        .eq('cart_id', cart.id)
+        .eq('variant_id', item.variantId)
+        .single()
+
+      if (existingItem) {
+        await supabase
+          .from('cart_items')
+          .update({ quantity: existingItem.quantity + item.quantity })
+          .eq('id', existingItem.id)
+      } else {
+        await supabase
+          .from('cart_items')
+          .insert({
+            cart_id: cart.id,
+            variant_id: item.variantId,
+            quantity: item.quantity,
+          })
+      }
+    }
+
+    // Clear local storage and refresh cart
+    get().clearLocalStorage()
+    await get().fetchCart()
   },
 }))

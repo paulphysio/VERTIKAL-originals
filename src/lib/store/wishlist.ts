@@ -19,11 +19,40 @@ interface WishlistStore {
   isInWishlist: (productId: string) => boolean
   clearWishlist: () => void
   getItemCount: () => number
+  mergeGuestWishlist: () => Promise<void>
+  saveToLocalStorage: () => void
+  loadFromLocalStorage: () => void
+  clearLocalStorage: () => void
 }
 
 export const useWishlistStore = create<WishlistStore>((set, get) => ({
   items: [],
   loading: false,
+  
+  saveToLocalStorage: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('guest_wishlist', JSON.stringify(get().items))
+    }
+  },
+  
+  loadFromLocalStorage: () => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('guest_wishlist')
+      if (stored) {
+        try {
+          set({ items: JSON.parse(stored) })
+        } catch (e) {
+          console.error('Error loading wishlist from localStorage:', e)
+        }
+      }
+    }
+  },
+  
+  clearLocalStorage: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('guest_wishlist')
+    }
+  },
   
   fetchWishlist: async () => {
     set({ loading: true })
@@ -31,7 +60,8 @@ export const useWishlistStore = create<WishlistStore>((set, get) => ({
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      set({ loading: false, items: [] })
+      get().loadFromLocalStorage()
+      set({ loading: false })
       return
     }
 
@@ -68,6 +98,7 @@ export const useWishlistStore = create<WishlistStore>((set, get) => ({
     if (!user) {
       // Fallback to localStorage for non-authenticated users
       set({ items: [...get().items, { ...item, id: crypto.randomUUID() }] })
+      get().saveToLocalStorage()
       return
     }
 
@@ -94,6 +125,7 @@ export const useWishlistStore = create<WishlistStore>((set, get) => ({
     if (!user) {
       // Fallback to localStorage for non-authenticated users
       set({ items: get().items.filter((i) => i.productId !== productId) })
+      get().saveToLocalStorage()
       return
     }
 
@@ -115,9 +147,48 @@ export const useWishlistStore = create<WishlistStore>((set, get) => ({
     return get().items.some((i) => i.productId === productId)
   },
   
-  clearWishlist: () => set({ items: [] }),
+  clearWishlist: () => {
+    set({ items: [] })
+    get().clearLocalStorage()
+  },
   
   getItemCount: () => {
     return get().items.length
+  },
+  
+  mergeGuestWishlist: async () => {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) return
+    
+    // Load from localStorage first to ensure we have the guest items
+    get().loadFromLocalStorage()
+    
+    const localItems = get().items
+    if (localItems.length === 0) return
+    
+    // Merge local items with database
+    for (const item of localItems) {
+      const { data: existingItem } = await supabase
+        .from('wishlists')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('product_id', item.productId)
+        .single()
+
+      if (!existingItem) {
+        await supabase
+          .from('wishlists')
+          .insert({
+            user_id: user.id,
+            product_id: item.productId,
+          })
+      }
+    }
+
+    // Clear local storage and refresh wishlist
+    get().clearLocalStorage()
+    await get().fetchWishlist()
   },
 }))

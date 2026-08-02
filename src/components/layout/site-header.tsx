@@ -4,17 +4,33 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart";
+import { createClient } from "@/lib/supabase/client";
 
 export default function SiteHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const cartItemCount = useCartStore((state) => state.getItemCount());
   const fetchCart = useCartStore((state) => state.fetchCart);
+  const supabase = createClient();
 
   useEffect(() => {
     setMounted(true);
     fetchCart();
+    checkUserRole();
   }, [fetchCart]);
+
+  const checkUserRole = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      setUserRole(profile?.role || null);
+    }
+  };
 
   const navLinks = [
     { label: "New in", href: "/products?sort=new" },
@@ -48,6 +64,7 @@ export default function SiteHeader() {
 
       <div className="flex items-center gap-4 text-[12px] font-bold sm:gap-5 sm:text-[13px]">
         <Link href="/search" className="hidden sm:inline">Search</Link>
+        {userRole === 'admin' && <Link href="/admin" className="hidden sm:inline">Admin</Link>}
         <Link href="/account" className="hidden sm:inline">Account</Link>
         <Link href="/cart" className="flex items-center gap-1.5">
           Bag
@@ -88,6 +105,17 @@ export default function SiteHeader() {
                 Search
               </Link>
             </li>
+            {userRole === 'admin' && (
+              <li>
+                <Link
+                  href="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-4 py-4 border-b border-ink/10 text-[13px] font-bold uppercase tracking-wide hover:bg-ink/5"
+                >
+                  Admin
+                </Link>
+              </li>
+            )}
             <li>
               <Link
                 href="/account"

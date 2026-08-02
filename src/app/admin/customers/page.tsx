@@ -19,7 +19,7 @@ export default function AdminCustomersPage() {
         .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('Error fetching customers:', error)
+        console.error('Error fetching customers:', error.message, error.details)
       } else {
         setCustomers(data || [])
       }
@@ -48,68 +48,72 @@ export default function AdminCustomersPage() {
   }
 
   if (loading) {
-    return <div className="text-center">Loading customers...</div>
+    return (
+      <div className="text-center font-mono text-sm py-16">
+        LOADING...
+      </div>
+    )
   }
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-8">Customers</h1>
+      <h1 className="font-display text-4xl uppercase mb-8">CUSTOMERS</h1>
 
       {/* Search */}
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
+      <div className="border-2 border-ink p-6 bg-paper mb-6">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-ink/50" />
           <input
             type="text"
-            placeholder="Search customers..."
+            placeholder="SEARCH CUSTOMERS..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full pl-12 pr-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral"
           />
         </div>
       </div>
 
       {/* Customers Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="border-2 border-ink bg-paper overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr className="text-left text-sm text-gray-600">
-                <th className="px-6 py-3">Customer</th>
-                <th className="px-6 py-3">Email</th>
-                <th className="px-6 py-3">Phone</th>
-                <th className="px-6 py-3">Loyalty Points</th>
-                <th className="px-6 py-3">Role</th>
-                <th className="px-6 py-3">Joined</th>
+            <thead>
+              <tr className="font-mono text-[11px] font-bold uppercase text-ink/50 border-b-2 border-ink">
+                <th className="px-6 py-3 text-left">Customer</th>
+                <th className="px-6 py-3 text-left">Email</th>
+                <th className="px-6 py-3 text-left">Phone</th>
+                <th className="px-6 py-3 text-left">Loyalty Points</th>
+                <th className="px-6 py-3 text-left">Role</th>
+                <th className="px-6 py-3 text-left">Joined</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-ink">
               {filteredCustomers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-600">
-                    No customers found
+                  <td colSpan={6} className="px-6 py-8 text-center font-mono text-sm text-ink/50">
+                    NO CUSTOMERS FOUND
                   </td>
                 </tr>
               ) : (
                 filteredCustomers.map((customer) => (
-                  <tr key={customer.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-medium">{customer.full_name || 'N/A'}</td>
-                    <td className="px-6 py-4 text-gray-600">{customer.id}</td>
-                    <td className="px-6 py-4 text-gray-600">{customer.phone || 'N/A'}</td>
-                    <td className="px-6 py-4 font-bold text-indigo-600">
+                  <tr key={customer.id} className="hover:bg-concrete/20">
+                    <td className="px-6 py-4 font-mono text-sm font-bold uppercase">{customer.full_name || 'N/A'}</td>
+                    <td className="px-6 py-4 font-mono text-sm text-ink/70">{customer.id}</td>
+                    <td className="px-6 py-4 font-mono text-sm text-ink/70">{customer.phone || 'N/A'}</td>
+                    <td className="px-6 py-4 font-mono text-sm font-bold text-coral">
                       {customer.loyalty_points || 0}
                     </td>
                     <td className="px-6 py-4">
                       <select
                         value={customer.role}
                         onChange={(e) => updateCustomerRole(customer.id, e.target.value)}
-                        className="px-3 py-1 rounded-full text-xs font-medium border cursor-pointer"
+                        className="px-3 py-1 border-2 border-ink font-mono text-[11px] font-bold uppercase cursor-pointer"
                       >
-                        <option value="customer">Customer</option>
-                        <option value="admin">Admin</option>
+                        <option value="customer">CUSTOMER</option>
+                        <option value="admin">ADMIN</option>
                       </select>
                     </td>
-                    <td className="px-6 py-4 text-gray-600">
+                    <td className="px-6 py-4 font-mono text-sm text-ink/70">
                       {new Date(customer.created_at).toLocaleDateString()}
                     </td>
                   </tr>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getFeaturedProducts, getTopCategories } from "@/lib/queries";
-import HeroTag3D from "@/components/hero/hero-tag-3d";
+import HeroSketch from "@/components/hero/sketch-hero";
 import CategoryTape from "@/components/layout/category-tape";
 import ProductCard from "@/components/product/product-card";
 import Marquee from "@/components/layout/marquee";
@@ -24,17 +24,18 @@ export default async function HomePage() {
             DROP 014 — LIVE NOW
           </div>
           <h1 className="font-display text-[15vw] uppercase leading-[0.86] sm:text-[64px] md:text-[76px] lg:text-[92px]">
-            VERTIKAL
+            Wear it
             <br />
-            <span className="text-coral">originals</span>
+            <span className="text-coral">like you</span>
             <br />
             <span className="text-paper [-webkit-text-stroke:2px_var(--color-ink)]">
-              Style
+              found it
             </span>
           </h1>
           <p className="mt-6 max-w-md text-[15px] text-ink/70 sm:text-base">
-            Premium fashion for the modern individual. Quality meets elegance 
-            in every piece. Discover your perfect style with our curated collection.
+            One-off fits pulled from deadstock fabric and factory overruns.
+            Every piece is numbered. Once it&apos;s gone, it&apos;s actually
+            gone — we don&apos;t restock.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
@@ -61,9 +62,9 @@ export default async function HomePage() {
             backgroundSize: "34px 34px",
           }}
         >
-          <HeroTag3D />
+          <HeroSketch />
           <div className="absolute bottom-4 left-4 border-2 border-ink bg-paper px-2.5 py-1.5 font-mono text-[10px] tracking-wide sm:bottom-6 sm:left-6">
-            DRAG TO SPIN — 001/014
+            SKETCHED LIVE — DROP 014
           </div>
         </div>
       </section>
@@ -91,7 +92,7 @@ export default async function HomePage() {
       <Marquee
         variant="acid"
         items={[
-          "PREMIUM QUALITY — LIMITED EDITIONS — NO REPRINTS — EXCLUSIVE PRICING",
+          "NUMBERED PIECES — LIMITED RUNS — NO REPRINTS — SAMPLE SALE PRICING",
         ]}
       />
 
