@@ -21,28 +21,28 @@ export default async function HomePage() {
         <div className="flex flex-col justify-center border-b-2 border-ink px-4 py-12 sm:px-10 sm:py-16 md:border-b-0 md:border-r-2 md:py-0">
           <div className="mb-5 flex w-fit items-center gap-2 border-2 border-ink bg-acid px-2.5 py-1 font-mono text-[11px] tracking-wide">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-coral" />
-            DROP 014 — LIVE NOW
+            NEW ARRIVALS — SHOP NOW
           </div>
           <h1 className="font-display text-[15vw] uppercase leading-[0.86] sm:text-[64px] md:text-[76px] lg:text-[92px]">
-            Wear it
+            Fresh
             <br />
-            <span className="text-coral">like you</span>
+            <span className="text-coral">styles</span>
             <br />
             <span className="text-paper [-webkit-text-stroke:2px_var(--color-ink)]">
-              found it
+              loaded
             </span>
           </h1>
           <p className="mt-6 max-w-md text-[15px] text-ink/70 sm:text-base">
-            One-off fits pulled from deadstock fabric and factory overruns.
-            Every piece is numbered. Once it&apos;s gone, it&apos;s actually
-            gone — we don&apos;t restock.
+            Quality clothing for everyday wear. We keep our shelves stocked with
+            fresh drops and restock your favorites. Style that fits your life,
+            prices that fit your budget.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               href="/products"
               className="inline-flex items-center gap-2 border-2 border-ink bg-ink px-6 py-3.5 font-mono text-[13px] font-bold uppercase tracking-wide text-paper transition-transform hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[4px_4px_0_var(--color-coral)]"
             >
-              Shop drop 014 →
+              Shop now →
             </Link>
             <Link
               href="/archive"
@@ -64,7 +64,7 @@ export default async function HomePage() {
         >
           <HeroSketch />
           <div className="absolute bottom-4 left-4 border-2 border-ink bg-paper px-2.5 py-1.5 font-mono text-[10px] tracking-wide sm:bottom-6 sm:left-6">
-            SKETCHED LIVE — DROP 014
+            VERTIKAL ORIGINALS
           </div>
         </div>
       </section>
@@ -73,7 +73,7 @@ export default async function HomePage() {
 
       <div className="flex items-baseline justify-between border-b-2 border-ink px-4 py-8 sm:px-10 sm:py-10">
         <h2 className="font-display text-3xl uppercase sm:text-5xl">
-          Shop the drop
+          Shop the collection
         </h2>
         <Link
           href="/products"
@@ -92,7 +92,7 @@ export default async function HomePage() {
       <Marquee
         variant="acid"
         items={[
-          "NUMBERED PIECES — LIMITED RUNS — NO REPRINTS — SAMPLE SALE PRICING",
+          "NEW ARRIVALS WEEKLY — FREE SHIPPING OVER ₦10,000 — QUALITY GUARANTEED — EASY RETURNS",
         ]}
       />
 

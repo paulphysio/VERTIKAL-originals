@@ -13,6 +13,11 @@ export async function sendOrderConfirmation(
   orderId: string,
   total: string
 ) {
+  if (!resend) {
+    console.warn('Resend API key not configured, skipping order confirmation email')
+    return
+  }
+
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
@@ -31,6 +36,11 @@ export async function sendOrderStatusUpdate(
   orderId: string,
   status: string
 ) {
+  if (!resend) {
+    console.warn('Resend API key not configured, skipping order status update email')
+    return
+  }
+
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
@@ -49,6 +59,11 @@ export async function sendNewOrderNotification(
   customerEmail: string,
   total: string
 ) {
+  if (!resend) {
+    console.warn('Resend API key not configured, skipping new order notification email')
+    return
+  }
+
   try {
     const adminEmails = await getAdminEmails()
     
@@ -69,6 +84,11 @@ export async function sendNewOrderNotification(
 }
 
 export async function sendWelcomeEmail(customerEmail: string, customerName: string) {
+  if (!resend) {
+    console.warn('Resend API key not configured, skipping welcome email')
+    return
+  }
+
   try {
     await resend.emails.send({
       from: FROM_EMAIL,
