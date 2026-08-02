@@ -49,7 +49,7 @@ export default function JoinList() {
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-6 border-[3px] border-ink bg-paper px-6 py-5 text-center sm:px-8 sm:py-6">
           <p className="font-display text-2xl leading-none sm:text-3xl">VERTIKAL originals</p>
           <p className="mt-1.5 font-mono text-[9px] tracking-widest sm:text-[10px]">
-            EST. LAGOS · MEMBER 0000
+            EST. LAGOS · 2024
           </p>
         </div>
       </div>

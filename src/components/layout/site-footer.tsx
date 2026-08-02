@@ -11,12 +11,23 @@ export default function SiteFooter() {
           { label: "Shipping", href: "/shipping" },
           { label: "Returns", href: "/returns" },
           { label: "Contact", href: "/contact" },
-          { label: "Instagram", href: "https://instagram.com" },
+          { label: "Instagram", href: "https://instagram.com", external: true },
         ].map((l) => (
           <li key={l.label}>
-            <Link href={l.href} className="text-[12px] font-bold uppercase">
-              {l.label}
-            </Link>
+            {l.external ? (
+              <a 
+                href={l.href} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-[12px] font-bold uppercase"
+              >
+                {l.label}
+              </a>
+            ) : (
+              <Link href={l.href} className="text-[12px] font-bold uppercase">
+                {l.label}
+              </Link>
+            )}
           </li>
         ))}
       </ul>

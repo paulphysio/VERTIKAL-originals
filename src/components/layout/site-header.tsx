@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart";
 import { createClient } from "@/lib/supabase/client";
+import PWAInstallPrompt from "@/components/pwa/install-prompt";
 
 export default function SiteHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -63,6 +64,7 @@ export default function SiteHeader() {
       </ul>
 
       <div className="flex items-center gap-4 text-[12px] font-bold sm:gap-5 sm:text-[13px]">
+        <PWAInstallPrompt />
         <Link href="/search" className="hidden sm:inline">Search</Link>
         {userRole === 'admin' && <Link href="/admin" className="hidden sm:inline">Admin</Link>}
         <Link href="/account" className="hidden sm:inline">Account</Link>

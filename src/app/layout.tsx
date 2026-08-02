@@ -24,6 +24,7 @@ export const metadata: Metadata = {
   title: "VERTIKAL originals — deadstock fits, no restocks",
   description:
     "Numbered pieces pulled from deadstock fabric and factory overruns. New drop every Friday. Once it's gone, it's gone.",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
