@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { formatPrice, formatDate } from '@/lib/utils'
 import { ArrowLeft, MapPin, CreditCard, Package } from 'lucide-react'
-import { sendOrderStatusUpdate } from '@/lib/email/send-email'
+import { sendOrderStatusUpdate } from '@/lib/actions/email'
 
 export default function AdminOrderDetailPage() {
   const params = useParams()

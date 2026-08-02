@@ -6,7 +6,7 @@ import { formatPrice } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { CreditCard, Upload, Check } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { sendOrderConfirmation, sendNewOrderNotification } from '@/lib/email/send-email'
+import { sendOrderConfirmation, sendNewOrderNotification } from '@/lib/actions/email'
 
 declare global {
   interface Window {
