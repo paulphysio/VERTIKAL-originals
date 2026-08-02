@@ -6,6 +6,7 @@ import { formatPrice } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { CreditCard, Upload, Check } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { sendOrderConfirmation, sendNewOrderNotification } from '@/lib/email/send-email'
 
 declare global {
   interface Window {
@@ -131,12 +132,16 @@ export default function CheckoutPage() {
           // Payment successful - update order status
           supabase
             .from('orders')
-            .update({ 
+            .update({
               payment_status: 'paid',
               payment_reference: response.reference
             })
             .eq('id', order.id)
-            .then(() => {
+            .then(async () => {
+              // Send email notifications
+              await sendOrderConfirmation(formData.email, formData.fullName, order.id, formatPrice(total))
+              await sendNewOrderNotification(order.id, formData.fullName, formData.email, formatPrice(total))
+              
               clearCart()
               router.push(`/account/orders/${order.id}`)
             })
@@ -226,6 +231,10 @@ export default function CheckoutPage() {
         .insert(orderItems)
 
       if (itemsError) throw itemsError
+
+      // Send email notifications
+      await sendOrderConfirmation(formData.email, formData.fullName, order.id, formatPrice(total))
+      await sendNewOrderNotification(order.id, formData.fullName, formData.email, formatPrice(total))
 
       clearCart()
       router.push(`/account/orders/${order.id}`)

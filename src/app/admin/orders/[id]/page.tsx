@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { formatPrice, formatDate } from '@/lib/utils'
 import { ArrowLeft, MapPin, CreditCard, Package } from 'lucide-react'
+import { sendOrderStatusUpdate } from '@/lib/email/send-email'
 
 export default function AdminOrderDetailPage() {
   const params = useParams()
@@ -45,6 +46,14 @@ export default function AdminOrderDetailPage() {
 
     if (!error) {
       setOrder({ ...order, status })
+      
+      // Send email notification to customer
+      const customerEmail = order.shipping_address?.email
+      const customerName = order.profiles?.full_name || order.shipping_address?.fullName
+      
+      if (customerEmail && customerName) {
+        await sendOrderStatusUpdate(customerEmail, customerName, order.id, status)
+      }
     }
   }
 

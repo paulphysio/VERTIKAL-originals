@@ -98,7 +98,7 @@ export default function AdminCustomersPage() {
                 filteredCustomers.map((customer) => (
                   <tr key={customer.id} className="hover:bg-concrete/20">
                     <td className="px-6 py-4 font-mono text-sm font-bold uppercase">{customer.full_name || 'N/A'}</td>
-                    <td className="px-6 py-4 font-mono text-sm text-ink/70">{customer.id}</td>
+                    <td className="px-6 py-4 font-mono text-sm text-ink/70">{customer.email || 'N/A'}</td>
                     <td className="px-6 py-4 font-mono text-sm text-ink/70">{customer.phone || 'N/A'}</td>
                     <td className="px-6 py-4 font-mono text-sm font-bold text-coral">
                       {customer.loyalty_points || 0}
