@@ -192,26 +192,27 @@ export default function SketchHero() {
 
         {/* All traced coordinates live in potrace's native space; this single
             transform maps that space onto our 0–415 x 0–472.5 viewBox. */}
-        <g
-          className={settled ? "animate-sketch-idle" : ""}
-          transform="translate(-32.890376,483.960644) scale(0.1,-0.1)"
-          fill="#0B0B0C"
-          fillOpacity={0}
-          stroke="#0B0B0C"
-          strokeWidth={26}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          filter="url(#pencilTexture)"
-        >
-          {Object.entries(SHAPES).map(([key, d]) => (
-            <path
-              key={key}
-              ref={(el) => {
-                pathRefs.current[key] = el;
-              }}
-              d={d}
-            />
-          ))}
+        <g className={settled ? "animate-sketch-idle" : ""}>
+          <g
+            transform="translate(-32.890376,483.960644) scale(0.1,-0.1)"
+            fill="#0B0B0C"
+            fillOpacity={0}
+            stroke="#0B0B0C"
+            strokeWidth={26}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            filter="url(#pencilTexture)"
+          >
+            {Object.entries(SHAPES).map(([key, d]) => (
+              <path
+                key={key}
+                ref={(el) => {
+                  pathRefs.current[key] = el;
+                }}
+                d={d}
+              />
+            ))}
+          </g>
         </g>
 
         {/* pencil marker, follows whichever shape is currently being drawn */}
