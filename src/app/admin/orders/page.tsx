@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { formatPrice, formatDate } from '@/lib/utils'
 import { Search, Filter } from 'lucide-react'
 import Link from 'next/link'
+import { sendOrderStatusUpdate } from '@/lib/actions/email'
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([])
@@ -46,6 +47,8 @@ export default function AdminOrdersPage() {
   )
 
   const updateOrderStatus = async (orderId: string, status: string) => {
+    console.log('updateOrderStatus called:', { orderId, status })
+    
     const { error } = await supabase
       .from('orders')
       .update({ status })
@@ -55,6 +58,23 @@ export default function AdminOrdersPage() {
       setOrders(orders.map((order) =>
         order.id === orderId ? { ...order, status } : order
       ))
+      
+      // Send email notification to customer
+      const order = orders.find(o => o.id === orderId)
+      if (order) {
+        const customerEmail = order.shipping_address?.email
+        const customerName = order.profiles?.full_name || order.shipping_address?.fullName
+        
+        console.log('Sending status update email:', { customerEmail, customerName, orderId, status })
+        
+        if (customerEmail && customerName) {
+          await sendOrderStatusUpdate(customerEmail, customerName, orderId, status)
+        } else {
+          console.warn('Missing customer email or name')
+        }
+      }
+    } else {
+      console.error('Failed to update order status:', error)
     }
   }
 

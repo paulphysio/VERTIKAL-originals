@@ -39,10 +39,15 @@ export default function AdminOrderDetailPage() {
   }, [params.id, supabase])
 
   const updateOrderStatus = async (status: string) => {
+    console.log('updateOrderStatus called with:', status)
+    console.log('Order data:', order)
+    
     const { error } = await supabase
       .from('orders')
       .update({ status })
       .eq('id', order.id)
+
+    console.log('Update result:', { error })
 
     if (!error) {
       setOrder({ ...order, status })
@@ -51,9 +56,15 @@ export default function AdminOrderDetailPage() {
       const customerEmail = order.shipping_address?.email
       const customerName = order.profiles?.full_name || order.shipping_address?.fullName
       
+      console.log('Attempting to send status update email:', { customerEmail, customerName, orderId: order.id, status })
+      
       if (customerEmail && customerName) {
         await sendOrderStatusUpdate(customerEmail, customerName, order.id, status)
+      } else {
+        console.warn('Missing customer email or name:', { customerEmail, customerName, shippingAddress: order.shipping_address, profile: order.profiles })
       }
+    } else {
+      console.error('Failed to update order status:', error)
     }
   }
 
@@ -121,7 +132,10 @@ export default function AdminOrderDetailPage() {
                 <label className="block font-mono text-[11px] font-bold uppercase mb-2">Update Status</label>
                 <select
                   value={order.status}
-                  onChange={(e) => updateOrderStatus(e.target.value)}
+                  onChange={(e) => {
+                    console.log('Select onChange fired:', e.target.value)
+                    updateOrderStatus(e.target.value)
+                  }}
                   className={`px-4 py-2 border-2 border-ink font-mono text-sm font-bold uppercase cursor-pointer ${getStatusColor(
                     order.status
                   )}`}

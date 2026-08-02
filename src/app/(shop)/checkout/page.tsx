@@ -392,9 +392,9 @@ export default function CheckoutPage() {
               <div className="mt-6 p-4 bg-concrete/20 border-2 border-ink">
                 <h3 className="font-mono text-[11px] font-bold uppercase mb-2">Bank Details</h3>
                 <p className="font-mono text-sm text-ink/70 mb-4">
-                  Bank: Zenith Bank<br />
-                  Account Name: VERTIKAL originals<br />
-                  Account Number: 1234567890
+                  Bank: PalmPay<br />
+                  Account Name: Enyi ATTAH Allen<br />
+                  Account Number: 9115319707
                 </p>
                 <div>
                   <label className="block font-mono text-[11px] font-bold uppercase mb-2">Upload Receipt</label>

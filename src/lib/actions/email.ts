@@ -13,7 +13,7 @@ const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null
 
-const FROM_EMAIL = 'VERTIKAL Originals <onboarding@resend.dev>'
+const FROM_EMAIL = 'VERTIKAL Originals <support@vertikaloriginals.com>'
 
 export async function getAdminEmails() {
   const supabase = await createClient()
@@ -45,7 +45,7 @@ export async function sendOrderConfirmation(
     await resend.emails.send({
       from: FROM_EMAIL,
       to: customerEmail,
-      subject: `ORDER CONFIRMED - #${orderId.toUpperCase()}`,
+      subject: `Order #${orderId.toUpperCase()} Confirmed`,
       html: orderConfirmationTemplate(customerName, orderId, total),
     })
   } catch (error) {
@@ -59,18 +59,22 @@ export async function sendOrderStatusUpdate(
   orderId: string,
   status: string
 ) {
+  console.log('sendOrderStatusUpdate called:', { customerEmail, customerName, orderId, status })
+  
   if (!resend) {
     console.warn('Resend API key not configured, skipping order status update email')
     return
   }
 
   try {
-    await resend.emails.send({
+    console.log('Sending email via Resend...')
+    const result = await resend.emails.send({
       from: FROM_EMAIL,
       to: customerEmail,
-      subject: `ORDER UPDATE - #${orderId.toUpperCase()}`,
+      subject: `Update for Order #${orderId.toUpperCase()}`,
       html: orderStatusUpdateTemplate(customerName, orderId, status),
     })
+    console.log('Email sent successfully:', result)
   } catch (error) {
     console.error('Failed to send order status update email:', error)
   }
@@ -98,7 +102,7 @@ export async function sendNewOrderNotification(
     await resend.emails.send({
       from: FROM_EMAIL,
       to: adminEmails,
-      subject: `NEW ORDER - #${orderId.toUpperCase()}`,
+      subject: `New Order #${orderId.toUpperCase()}`,
       html: newOrderNotificationTemplate(orderId, customerName, customerEmail, total),
     })
   } catch (error) {
