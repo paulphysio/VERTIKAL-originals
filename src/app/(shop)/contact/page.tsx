@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Phone, Mail } from 'lucide-react'
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false)
@@ -12,90 +13,124 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-16">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8">Contact Us</h1>
+    <div className="min-h-screen">
+      <div className="border-b-2 border-ink px-4 py-8 sm:px-10 sm:py-10">
+        <h1 className="font-display text-3xl uppercase sm:text-5xl">CONTACT</h1>
+      </div>
 
-        {submitted ? (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-            <h2 className="text-xl font-semibold text-green-800 mb-2">
-              Thank you for reaching out!
-            </h2>
-            <p className="text-green-700">
-              We'll get back to you within 24 hours.
-            </p>
+      <div className="max-w-4xl mx-auto px-4 py-8 sm:px-10 sm:py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Contact Info */}
+          <div className="space-y-6">
+            <h2 className="font-display text-xl uppercase pb-2 border-b-2 border-ink">GET IN TOUCH</h2>
+            
+            <div className="space-y-4">
+              <a
+                href="tel:+2349039744146"
+                className="flex items-center gap-4 p-4 border-2 border-ink hover:bg-coral hover:text-paper hover:border-coral transition group"
+              >
+                <Phone className="h-5 w-5" />
+                <div>
+                  <p className="font-mono text-[11px] font-bold uppercase text-ink/50 group-hover:text-paper/70">PHONE</p>
+                  <p className="font-mono text-sm">+234 903 974 4146</p>
+                </div>
+              </a>
+
+              <a
+                href="mailto:VERTIKALoriginals@gmail.com"
+                className="flex items-center gap-4 p-4 border-2 border-ink hover:bg-coral hover:text-paper hover:border-coral transition group"
+              >
+                <Mail className="h-5 w-5" />
+                <div>
+                  <p className="font-mono text-[11px] font-bold uppercase text-ink/50 group-hover:text-paper/70">EMAIL</p>
+                  <p className="font-mono text-sm">VERTIKALoriginals@gmail.com</p>
+                </div>
+              </a>
+
+              <a
+                href="https://instagram.com/VERTIKALoriginals_"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 p-4 border-2 border-ink hover:bg-coral hover:text-paper hover:border-coral transition group"
+              >
+                <span className="font-mono text-lg font-bold">@</span>
+                <div>
+                  <p className="font-mono text-[11px] font-bold uppercase text-ink/50 group-hover:text-paper/70">INSTAGRAM</p>
+                  <p className="font-mono text-sm">@VERTIKALoriginals_</p>
+                </div>
+              </a>
+            </div>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-                Subject
-              </label>
-              <input
-                type="text"
-                id="subject"
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                Message
-              </label>
-              <textarea
-                id="message"
-                rows={6}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full px-6 py-3 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700 transition"
-            >
-              Send Message
-            </button>
-          </form>
-        )}
-
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+          {/* Contact Form */}
           <div>
-            <h3 className="font-semibold mb-2">Email</h3>
-            <p className="text-gray-600">support@vertikaloriginals.com</p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Phone</h3>
-            <p className="text-gray-600">+234 123 456 7890</p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Address</h3>
-            <p className="text-gray-600">Lagos, Nigeria</p>
+            <h2 className="font-display text-xl uppercase pb-2 border-b-2 border-ink mb-6">SEND A MESSAGE</h2>
+            
+            {submitted ? (
+              <div className="border-2 border-ink bg-acid p-6 text-center">
+                <h2 className="font-display text-xl uppercase mb-2">MESSAGE SENT</h2>
+                <p className="font-mono text-sm">
+                  We'll get back to you within 24 hours.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="name" className="block font-mono text-[11px] font-bold uppercase mb-2">
+                    NAME *
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    required
+                    className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="email" className="block font-mono text-[11px] font-bold uppercase mb-2">
+                    EMAIL *
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    required
+                    className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="subject" className="block font-mono text-[11px] font-bold uppercase mb-2">
+                    SUBJECT *
+                  </label>
+                  <input
+                    type="text"
+                    id="subject"
+                    required
+                    className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="message" className="block font-mono text-[11px] font-bold uppercase mb-2">
+                    MESSAGE *
+                  </label>
+                  <textarea
+                    id="message"
+                    rows={6}
+                    required
+                    className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full px-6 py-4 border-2 border-ink bg-ink text-paper font-mono text-sm font-bold uppercase hover:bg-coral hover:border-coral transition"
+                >
+                  SEND MESSAGE
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </div>
