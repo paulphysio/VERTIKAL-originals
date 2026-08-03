@@ -27,7 +27,7 @@ export const orderConfirmationTemplate = (customerName: string, orderId: string,
       </p>
       <div style="border-top: 2px solid #000000; padding-top: 20px; margin-top: 30px;">
         <p style="font-size: 12px; text-transform: uppercase; margin: 0;">
-          QUESTIONS? REPLY TO THIS EMAIL OR CONTACT US AT VERTIKALORIGINALS@GMAIL.COM
+          QUESTIONS? REPLY TO THIS EMAIL OR CONTACT US AT SUPPORT@VERTIKALORIGINALS.COM
         </p>
       </div>
     </div>
@@ -59,7 +59,7 @@ export const orderStatusUpdateTemplate = (customerName: string, orderId: string,
       </p>
       <div style="border-top: 2px solid #000000; padding-top: 20px; margin-top: 30px;">
         <p style="font-size: 12px; text-transform: uppercase; margin: 0;">
-          QUESTIONS? REPLY TO THIS EMAIL OR CONTACT US AT VERTIKALORIGINALS@GMAIL.COM
+          QUESTIONS? REPLY TO THIS EMAIL OR CONTACT US AT SUPPORT@VERTIKALORIGINALS.COM
         </p>
       </div>
     </div>
