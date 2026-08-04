@@ -65,7 +65,7 @@ export default function AdminShippingZonesPage() {
       setFormData({ name: '', states: '', fee: '0', estimated_days: '3-5' })
       fetchZones()
     } else {
-      alert('Failed to save shipping zone')
+      alert(`Failed to save shipping zone: ${error.message}`)
     }
     setLoading(false)
   }
