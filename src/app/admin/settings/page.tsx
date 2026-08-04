@@ -38,7 +38,7 @@ export default function AdminSettingsPage() {
 
     const { error } = await supabase
       .from('settings')
-      .upsert(settings)
+      .upsert({ ...settings, id: 1 })
 
     if (!error) {
       alert('Settings saved successfully!')
