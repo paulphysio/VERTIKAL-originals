@@ -35,19 +35,23 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     const fetchProduct = async () => {
+      console.log('Fetching product with slug:', params.slug)
+      
       const { data, error } = await supabase
         .from('products')
         .select(`
           *,
           product_variants(*),
-          product_images(*),
-          categories(*)
+          product_images(*)
         `)
         .eq('slug', params.slug)
         .single()
 
+      console.log('Product fetch result:', { data, error })
+
       if (error) {
         console.error('Error fetching product:', error)
+        setLoading(false)
       } else {
         setProduct(data)
         // Select first variant by default
@@ -56,10 +60,9 @@ export default function ProductDetailPage() {
           setSelectedSize(data.product_variants[0].size)
           setSelectedColor(data.product_variants[0].color)
         }
+        setLoading(false)
       }
-      setLoading(false)
     }
-
     fetchProduct()
   }, [params.slug, supabase])
 
@@ -163,7 +166,7 @@ export default function ProductDetailPage() {
         {/* Details */}
         <div>
           <p className="font-mono text-[11px] text-ink/50 mb-2">
-            {product.category?.name?.toUpperCase() || 'SHOP'}
+            SHOP
           </p>
           <h1 className="font-display text-4xl uppercase leading-none mb-4 sm:text-5xl">
             {product.name}
