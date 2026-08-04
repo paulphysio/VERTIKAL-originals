@@ -39,7 +39,7 @@ export default function SiteHeader() {
     { label: "Wishlist", href: "/wishlist" },
     { label: "About", href: "/about" },
     { label: "Contact", href: "/contact" },
-    { label: "Archive", href: "/archive" },
+    { label: "Lookbook", href: "/lookbook" },
   ];
 
   return (

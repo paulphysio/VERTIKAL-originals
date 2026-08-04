@@ -44,7 +44,7 @@ export default async function HomePage() {
               Shop now →
             </Link>
             <Link
-              href="/archive"
+              href="/lookbook"
               className="inline-flex items-center gap-2 border-2 border-ink px-6 py-3.5 font-mono text-[13px] font-bold uppercase tracking-wide transition-transform hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[4px_4px_0_var(--color-ink)]"
             >
               View lookbook

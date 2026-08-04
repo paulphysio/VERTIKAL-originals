@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { Product } from "@/lib/types";
 import { lowestVariantPrice, productImageUrls } from "@/lib/types";
+import { Heart } from "lucide-react";
+import { useWishlistStore } from "@/lib/store/wishlist";
 
 function formatNaira(amount: number) {
   return `\u20a6${Math.round(amount).toLocaleString("en-NG")}`;
@@ -20,7 +22,17 @@ export default function ProductCard({
 }) {
   const images = productImageUrls(product, 3);
   const [active, setActive] = useState(0);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [heartAnimating, setHeartAnimating] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  
+  const wishlistItems = useWishlistStore((state) => state.items);
+  const addItem = useWishlistStore((state) => state.addItem);
+  const removeItem = useWishlistStore((state) => state.removeItem);
+
+  useEffect(() => {
+    setIsWishlisted(wishlistItems.some((item) => item.productId === product.id));
+  }, [wishlistItems, product.id]);
 
   useEffect(() => {
     if (images.length <= 1) return;
@@ -34,14 +46,30 @@ export default function ProductCard({
 
   const price = lowestVariantPrice(product);
   const wasPrice = product.compare_at_price ?? null;
-  const isNew =
-    now - new Date(product.created_at).getTime() < 1000 * 60 * 60 * 24 * 14;
-  const badge = wasPrice ? "sale" : isNew ? "new" : null;
 
   // Check if product is out of stock (all variants have stock === 0)
   const isOutOfStock = product.product_variants?.every(
     (v: any) => v.stock === 0
   ) || false;
+
+  const handleWishlistClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setHeartAnimating(true);
+    setTimeout(() => setHeartAnimating(false), 300);
+
+    if (isWishlisted) {
+      removeItem(product.id);
+    } else {
+      addItem({
+        productId: product.id,
+        name: product.name,
+        price: price,
+        image: images[0] || '',
+      });
+    }
+  };
 
   return (
     <Link
@@ -59,15 +87,22 @@ export default function ProductCard({
       }}
     >
       <div className="relative aspect-[3/4] overflow-hidden bg-concrete/20">
-        {badge && (
+        {wasPrice && (
           <span
-            className={`absolute left-2 top-2 z-10 border-2 border-ink px-2 py-0.5 font-mono text-[10px] font-bold tracking-wide ${
-              badge === "sale" ? "bg-coral text-paper" : "bg-acid text-ink"
-            }`}
+            className="absolute left-2 top-2 z-10 border-2 border-ink bg-coral px-2 py-0.5 font-mono text-[10px] font-bold tracking-wide text-paper"
           >
-            {badge === "sale" ? "SALE" : "NEW"}
+            SALE
           </span>
         )}
+
+        <button
+          onClick={handleWishlistClick}
+          className={`absolute right-2 top-2 z-10 p-2 bg-paper border-2 border-ink transition-all ${
+            isWishlisted ? 'text-coral border-coral' : 'text-ink'
+          } ${heartAnimating ? 'scale-125' : 'scale-100'}`}
+        >
+          <Heart className={`h-5 w-5 ${isWishlisted ? 'fill-current' : ''}`} />
+        </button>
 
         {isOutOfStock && (
           <div className="absolute inset-0 z-20 flex items-center justify-center">
