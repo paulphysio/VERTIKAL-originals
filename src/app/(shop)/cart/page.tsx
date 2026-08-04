@@ -4,13 +4,23 @@ import { useState, useEffect } from 'react'
 import { useCartStore } from '@/lib/store/cart'
 import { formatPrice } from '@/lib/utils'
 import Link from 'next/link'
+import { getSettings } from '@/lib/actions/settings'
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, getTotal, clearCart, fetchCart, loading } = useCartStore()
+  const [settings, setSettings] = useState<any>(null)
 
   useEffect(() => {
     fetchCart()
   }, [fetchCart])
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const settingsData = await getSettings()
+      setSettings(settingsData)
+    }
+    fetchSettings()
+  }, [])
 
   if (loading) {
     return (
@@ -116,22 +126,31 @@ export default function CartPage() {
           <div className="border-2 border-ink p-6 sticky top-24">
             <h2 className="font-display text-2xl uppercase mb-6">ORDER SUMMARY</h2>
 
-            <div className="space-y-4 mb-6 font-mono text-sm">
-              <div className="flex justify-between">
-                <span className="text-ink/70">SUBTOTAL</span>
-                <span>₦{Math.round(getTotal()).toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-ink/70">SHIPPING</span>
-                <span>{getTotal() >= 10000 ? 'FREE' : '₦1,000'}</span>
-              </div>
-              <div className="border-t-2 border-ink pt-4 flex justify-between font-bold text-base">
-                <span>TOTAL</span>
-                <span className="text-coral">
-                  ₦{Math.round(getTotal() + (getTotal() >= 10000 ? 0 : 1000)).toLocaleString()}
-                </span>
-              </div>
-            </div>
+            {(() => {
+              const subtotal = getTotal()
+              const shippingFee = settings?.shippingFee ? Number(settings.shippingFee) : 1000
+              const shipping = shippingFee
+              const total = subtotal + shipping
+
+              return (
+                <div className="space-y-4 mb-6 font-mono text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-ink/70">SUBTOTAL</span>
+                    <span>₦{Math.round(subtotal).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-ink/70">SHIPPING</span>
+                    <span>₦{shipping.toLocaleString()}</span>
+                  </div>
+                  <div className="border-t-2 border-ink pt-4 flex justify-between font-bold text-base">
+                    <span>TOTAL</span>
+                    <span className="text-coral">
+                      ₦{Math.round(total).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              )
+            })()}
 
             <Link
               href="/checkout"

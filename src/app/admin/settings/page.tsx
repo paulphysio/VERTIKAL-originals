@@ -12,7 +12,6 @@ export default function AdminSettingsPage() {
     storePhone: '',
     currency: 'NGN',
     shippingFee: '2000',
-    freeShippingThreshold: '50000',
     paystackPublicKey: '',
     enableEmailNotifications: true,
     enableSmsNotifications: false,
@@ -112,7 +111,7 @@ export default function AdminSettingsPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block font-mono text-[11px] font-bold uppercase mb-2">Default Shipping Fee (₦)</label>
+              <label className="block font-mono text-[11px] font-bold uppercase mb-2">Shipping Fee (₦)</label>
               <input
                 type="number"
                 value={settings.shippingFee}

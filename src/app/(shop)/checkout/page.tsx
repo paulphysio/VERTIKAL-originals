@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { CreditCard, Upload, Check } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { sendOrderConfirmation, sendNewOrderNotification } from '@/lib/actions/email'
+import { getSettings } from '@/lib/actions/settings'
 
 declare global {
   interface Window {
@@ -23,6 +24,7 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<'paystack' | 'bank'>('paystack')
   const [receiptFile, setReceiptFile] = useState<File | null>(null)
   const [paystackLoaded, setPaystackLoaded] = useState(false)
+  const [settings, setSettings] = useState<any>(null)
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -34,8 +36,18 @@ export default function CheckoutPage() {
     notes: '',
   })
 
+  // Fetch settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const settingsData = await getSettings()
+      setSettings(settingsData)
+    }
+    fetchSettings()
+  }, [])
+
   const subtotal = getTotal()
-  const shipping = subtotal >= 10000 ? 0 : 1000
+  const shippingFee = settings?.shippingFee ? Number(settings.shippingFee) : 1000
+  const shipping = shippingFee
   const total = subtotal + shipping
 
   // Load Paystack script
@@ -60,6 +72,11 @@ export default function CheckoutPage() {
       return
     }
 
+    if (items.length === 0) {
+      alert('Your cart is empty')
+      return
+    }
+
     setLoading(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -69,7 +86,7 @@ export default function CheckoutPage() {
         return
       }
 
-      const paystackPublicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
+      const paystackPublicKey = settings?.paystackPublicKey || process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
       
       if (!paystackPublicKey) {
         throw new Error('Paystack public key not configured')

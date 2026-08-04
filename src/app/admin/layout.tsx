@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LayoutDashboard, Package, ShoppingCart, Users, Tag, Settings, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingCart, Users, Tag, Settings, LogOut, Menu, X, MapPin } from 'lucide-react'
 import SiteHeader from '@/components/layout/site-header'
 import SiteFooter from '@/components/layout/site-footer'
 
@@ -66,6 +66,7 @@ export default function AdminLayout({
     { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
     { name: 'Categories', href: '/admin/categories', icon: Tag },
     { name: 'Customers', href: '/admin/customers', icon: Users },
+    { name: 'Shipping Zones', href: '/admin/shipping-zones', icon: MapPin },
     { name: 'Settings', href: '/admin/settings', icon: Settings },
   ]
 
