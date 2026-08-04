@@ -67,6 +67,7 @@ export default function ProductCard({
         name: product.name,
         price: price,
         image: images[0] || '',
+        addedAt: new Date().toISOString(),
       });
     }
   };
