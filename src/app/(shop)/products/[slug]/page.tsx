@@ -35,8 +35,6 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     const fetchProduct = async () => {
-      console.log('Fetching product with slug:', params.slug)
-      
       const { data, error } = await supabase
         .from('products')
         .select(`
@@ -46,8 +44,6 @@ export default function ProductDetailPage() {
         `)
         .eq('slug', params.slug)
         .single()
-
-      console.log('Product fetch result:', { data, error })
 
       if (error) {
         console.error('Error fetching product:', error)

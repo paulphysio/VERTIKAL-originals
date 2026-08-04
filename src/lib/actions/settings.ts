@@ -7,7 +7,7 @@ export async function getSettings() {
   const { data, error } = await supabase
     .from('settings')
     .select('*')
-    .single()
+    .maybeSingle()
 
   if (error) {
     console.error('Error fetching settings:', error)

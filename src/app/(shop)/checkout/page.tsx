@@ -409,9 +409,9 @@ export default function CheckoutPage() {
               <div className="mt-6 p-4 bg-concrete/20 border-2 border-ink">
                 <h3 className="font-mono text-[11px] font-bold uppercase mb-2">Bank Details</h3>
                 <p className="font-mono text-sm text-ink/70 mb-4">
-                  Bank: PalmPay<br />
-                  Account Name: Enyi ATTAH Allen<br />
-                  Account Number: 9115319707
+                  Bank: Moniepoint<br />
+                  Account Name: VERTIKAL originals enterprise limited<br />
+                  Account Number: 9039744146
                 </p>
                 <div>
                   <label className="block font-mono text-[11px] font-bold uppercase mb-2">Upload Receipt</label>
