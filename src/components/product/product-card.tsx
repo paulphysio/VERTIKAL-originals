@@ -38,6 +38,11 @@ export default function ProductCard({
     now - new Date(product.created_at).getTime() < 1000 * 60 * 60 * 24 * 14;
   const badge = wasPrice ? "sale" : isNew ? "new" : null;
 
+  // Check if product is out of stock (all variants have stock === 0)
+  const isOutOfStock = product.product_variants?.every(
+    (v: any) => v.stock === 0
+  ) || false;
+
   return (
     <Link
       href={`/products/${product.slug}`}
@@ -62,6 +67,16 @@ export default function ProductCard({
           >
             {badge === "sale" ? "SALE" : "NEW"}
           </span>
+        )}
+
+        {isOutOfStock && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center">
+            <img
+              src="/sold-out.png"
+              alt="Out of Stock"
+              className="w-[30%] h-[30%] object-contain"
+            />
+          </div>
         )}
 
         {images.map((src, i) => (

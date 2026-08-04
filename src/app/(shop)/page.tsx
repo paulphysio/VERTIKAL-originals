@@ -88,13 +88,6 @@ export default async function HomePage() {
         ))}
       </div>
 
-      <Marquee
-        variant="acid"
-        items={[
-          "NEW ARRIVALS WEEKLY — QUALITY GUARANTEED",
-        ]}
-      />
-
       <div className="flex flex-col divide-y-2 divide-ink border-b-2 border-ink sm:flex-row sm:divide-x-2 sm:divide-y-0">
         {[
           ["01", "Paystack + bank transfer"],

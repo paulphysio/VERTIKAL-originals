@@ -132,7 +132,7 @@ export default function ProductDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
         {/* Images */}
         <div className="space-y-4">
-          <div className="aspect-square bg-concrete/20 border-2 border-ink overflow-hidden">
+          <div className="relative aspect-square bg-concrete/20 border-2 border-ink overflow-hidden">
             {image ? (
               <img
                 src={image.url}
@@ -143,6 +143,13 @@ export default function ProductDetailPage() {
               <div className="w-full h-full flex items-center justify-center font-mono text-sm text-ink/50">
                 NO IMAGE
               </div>
+            )}
+            {selectedVariant?.stock === 0 && (
+              <img
+                src="/sold-out.png"
+                alt="Out of Stock"
+                className="absolute inset-0 w-[30%] h-[30%] object-contain z-10 m-auto"
+              />
             )}
           </div>
           {product.product_images?.length > 1 && (
