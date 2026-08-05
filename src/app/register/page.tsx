@@ -1,6 +1,6 @@
 import { signup } from '@/lib/actions/auth'
 import Link from 'next/link'
-import { Suspense } from 'react'
+import { Suspense, use } from 'react'
 
 function RegisterForm({ searchParams }: { searchParams: { error?: string } }) {
   return (
@@ -18,6 +18,7 @@ function RegisterForm({ searchParams }: { searchParams: { error?: string } }) {
 
         {searchParams.error && (
           <div className="border-2 border-coral bg-coral/10 p-4">
+            <p className="font-mono text-sm text-coral font-bold uppercase mb-1">Error</p>
             <p className="font-mono text-sm text-coral">{decodeURIComponent(searchParams.error)}</p>
           </div>
         )}
@@ -88,9 +89,10 @@ export default function RegisterPage({
 }: {
   searchParams: Promise<{ error?: string }>
 }) {
+  const params = use(searchParams)
   return (
     <Suspense fallback={<RegisterForm searchParams={{}} />}>
-      <RegisterForm searchParams={searchParams as { error?: string }} />
+      <RegisterForm searchParams={params as { error?: string }} />
     </Suspense>
   )
 }

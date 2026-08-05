@@ -11,6 +11,7 @@ export default function SiteHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
   const cartItemCount = useCartStore((state) => state.getItemCount());
   const fetchCart = useCartStore((state) => state.fetchCart);
   const supabase = createClient();
@@ -19,6 +20,7 @@ export default function SiteHeader() {
     setMounted(true);
     fetchCart();
     checkUserRole();
+    checkUser();
   }, [fetchCart]);
 
   const checkUserRole = async () => {
@@ -31,6 +33,11 @@ export default function SiteHeader() {
         .single();
       setUserRole(profile?.role || null);
     }
+  };
+
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
   };
 
   const navLinks = [
@@ -67,7 +74,11 @@ export default function SiteHeader() {
         <PWAInstallPrompt />
         <Link href="/search" className="hidden sm:inline">Search</Link>
         {userRole === 'admin' && <Link href="/admin" className="hidden sm:inline">Admin</Link>}
-        <Link href="/account" className="hidden sm:inline">Account</Link>
+        {user ? (
+          <Link href="/account" className="hidden sm:inline">Account</Link>
+        ) : (
+          <Link href="/login" className="hidden sm:inline">Sign In</Link>
+        )}
         <Link href="/cart" className="flex items-center gap-1.5">
           Bag
           <span className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-ink bg-acid font-mono text-[10px]">
@@ -119,13 +130,23 @@ export default function SiteHeader() {
               </li>
             )}
             <li>
-              <Link
-                href="/account"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-4 py-4 text-[13px] font-bold uppercase tracking-wide hover:bg-ink/5"
-              >
-                Account
-              </Link>
+              {user ? (
+                <Link
+                  href="/account"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-4 py-4 text-[13px] font-bold uppercase tracking-wide hover:bg-ink/5"
+                >
+                  Account
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-4 py-4 text-[13px] font-bold uppercase tracking-wide hover:bg-ink/5"
+                >
+                  Sign In
+                </Link>
+              )}
             </li>
           </ul>
         </div>

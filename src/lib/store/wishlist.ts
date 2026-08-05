@@ -95,7 +95,12 @@ export const useWishlistStore = create<WishlistStore>((set, get) => ({
   addItem: async (item) => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    
+
+    if (!user) {
+      window.location.href = '/login'
+      return
+    }
+
     // Track favorite event to Supabase events table (via server action)
     await trackClientEvent({
       event_type: 'favorite',
@@ -107,13 +112,6 @@ export const useWishlistStore = create<WishlistStore>((set, get) => ({
       },
       path: window.location.pathname,
     })
-    
-    if (!user) {
-      // Fallback to localStorage for non-authenticated users
-      set({ items: [...get().items, { ...item, id: crypto.randomUUID() }] })
-      get().saveToLocalStorage()
-      return
-    }
 
     const { error } = await supabase
       .from('wishlists')

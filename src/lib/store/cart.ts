@@ -24,68 +24,40 @@ interface CartStore {
   clearCart: () => Promise<void>
   getTotal: () => number
   getItemCount: () => number
-  mergeGuestCart: () => Promise<void>
-  saveToLocalStorage: () => void
-  loadFromLocalStorage: () => void
-  clearLocalStorage: () => void
 }
 
 export const useCartStore = create<CartStore>((set, get) => ({
   items: [],
   loading: false,
-  
-  saveToLocalStorage: () => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('guest_cart', JSON.stringify(get().items))
-    }
-  },
-  
-  loadFromLocalStorage: () => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('guest_cart')
-      if (stored) {
-        try {
-          set({ items: JSON.parse(stored) })
-        } catch (e) {
-          console.error('Error loading cart from localStorage:', e)
-        }
-      }
-    }
-  },
-  
-  clearLocalStorage: () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('guest_cart')
-    }
-  },
-  
+
   fetchCart: async () => {
     set({ loading: true })
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    
-    // Always load from localStorage first for now
-    get().loadFromLocalStorage()
-    
+
     if (!user) {
-      set({ loading: false })
+      set({ items: [], loading: false })
       return
     }
 
-    // Try to sync from database in background
     try {
-      let { data: cart } = await supabase
+      // Use maybeSingle() so 0 rows doesn't throw 406
+      let { data: cart, error: cartError } = await supabase
         .from('carts')
         .select('*')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
+
+      if (cartError) throw cartError
 
       if (!cart) {
-        const { data: newCart } = await supabase
+        const { data: newCart, error: insertError } = await supabase
           .from('carts')
           .insert({ user_id: user.id })
           .select()
           .single()
+
+        if (insertError) throw insertError
         cart = newCart
       }
 
@@ -126,12 +98,17 @@ export const useCartStore = create<CartStore>((set, get) => ({
       set({ loading: false })
     }
   },
-  
+
   addItem: async (item) => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    
-    // Track add_to_cart event to Supabase events table (via server action)
+
+    if (!user) {
+      window.location.href = '/login'
+      return
+    }
+
+    // Track add_to_cart event
     await trackClientEvent({
       event_type: 'add_to_cart',
       user_id: user?.id,
@@ -146,227 +123,37 @@ export const useCartStore = create<CartStore>((set, get) => ({
       },
       path: window.location.pathname,
     })
-    
-    // Always use localStorage for now (database issue)
-    const existingItem = get().items.find((i) => i.variantId === item.variantId)
-    if (existingItem) {
-      set({
-        items: get().items.map((i) =>
-          i.variantId === item.variantId
-            ? { ...i, quantity: i.quantity + item.quantity }
-            : i
-        ),
-      })
-    } else {
-      set({ items: [...get().items, { ...item, id: crypto.randomUUID() }] })
-    }
-    get().saveToLocalStorage()
-    
-    // Try database sync in background (won't block UI)
-    if (user) {
-      try {
-        let { data: cart } = await supabase
-          .from('carts')
-          .select('*')
-          .eq('user_id', user.id)
-          .single()
 
-        if (!cart) {
-          const { data: newCart } = await supabase
-            .from('carts')
-            .insert({ user_id: user.id })
-            .select()
-            .single()
-          cart = newCart
-        }
-
-        if (cart) {
-          const { data: existingItem } = await supabase
-            .from('cart_items')
-            .select('*')
-            .eq('cart_id', cart.id)
-            .eq('variant_id', item.variantId)
-            .single()
-
-          if (existingItem) {
-            await supabase
-              .from('cart_items')
-              .update({ quantity: existingItem.quantity + item.quantity })
-              .eq('id', existingItem.id)
-          } else {
-            await supabase
-              .from('cart_items')
-              .insert({
-                cart_id: cart.id,
-                variant_id: item.variantId,
-                quantity: item.quantity,
-              })
-          }
-        }
-      } catch (e) {
-        console.log('Database sync failed (using localStorage):', e)
-      }
-    }
-  },
-  
-  removeItem: async (variantId) => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      // Fallback to localStorage for non-authenticated users
-      set({ items: get().items.filter((i) => i.variantId !== variantId) })
-      get().saveToLocalStorage()
-      return
-    }
-
-    const { data: cart } = await supabase
-      .from('carts')
-      .select('*')
-      .eq('user_id', user.id)
-      .single()
-
-    if (!cart) return
-
-    await supabase
-      .from('cart_items')
-      .delete()
-      .eq('cart_id', cart.id)
-      .eq('variant_id', variantId)
-
-    set({ items: get().items.filter((i) => i.variantId !== variantId) })
-  },
-  
-  updateQuantity: async (variantId, quantity) => {
-    if (quantity <= 0) {
-      await get().removeItem(variantId)
-      return
-    }
-
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      // Fallback to localStorage for non-authenticated users
-      set({
-        items: get().items.map((i) =>
-          i.variantId === variantId ? { ...i, quantity } : i
-        ),
-      })
-      get().saveToLocalStorage()
-      return
-    }
-
-    const { data: cart } = await supabase
-      .from('carts')
-      .select('*')
-      .eq('user_id', user.id)
-      .single()
-
-    if (!cart) return
-
-    const { data: cartItem } = await supabase
-      .from('cart_items')
-      .select('*')
-      .eq('cart_id', cart.id)
-      .eq('variant_id', variantId)
-      .single()
-
-    if (cartItem) {
-      await supabase
-        .from('cart_items')
-        .update({ quantity })
-        .eq('id', cartItem.id)
-    }
-
-    set({
-      items: get().items.map((i) =>
-        i.variantId === variantId ? { ...i, quantity } : i
-      ),
-    })
-  },
-  
-  clearCart: async () => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      set({ items: [] })
-      get().clearLocalStorage()
-      return
-    }
-
-    const { data: cart } = await supabase
-      .from('carts')
-      .select('*')
-      .eq('user_id', user.id)
-      .single()
-
-    if (cart) {
-      await supabase
-        .from('cart_items')
-        .delete()
-        .eq('cart_id', cart.id)
-    }
-
-    set({ items: [] })
-  },
-  
-  getTotal: () => {
-    return get().items.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    )
-  },
-  
-  getItemCount: () => {
-    return get().items.reduce((count, item) => count + item.quantity, 0)
-  },
-  
-  mergeGuestCart: async () => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) return
-    
-    // Load from localStorage first to ensure we have the guest items
-    get().loadFromLocalStorage()
-    
-    const localItems = get().items
-    if (localItems.length === 0) return
-    
-    // Get or create cart for user
-    let { data: cart } = await supabase
-      .from('carts')
-      .select('*')
-      .eq('user_id', user.id)
-      .single()
-
-    if (!cart) {
-      const { data: newCart } = await supabase
+    try {
+      let { data: cart } = await supabase
         .from('carts')
-        .insert({ user_id: user.id })
-        .select()
-        .single()
-      cart = newCart
-    }
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle()
 
-    if (!cart) return
+      if (!cart) {
+        const { data: newCart } = await supabase
+          .from('carts')
+          .insert({ user_id: user.id })
+          .select()
+          .single()
+        cart = newCart
+      }
 
-    // Merge local items with database
-    for (const item of localItems) {
-      const { data: existingItem } = await supabase
+      if (!cart) return
+
+      const { data: existingDbItem } = await supabase
         .from('cart_items')
         .select('*')
         .eq('cart_id', cart.id)
         .eq('variant_id', item.variantId)
-        .single()
+        .maybeSingle()
 
-      if (existingItem) {
+      if (existingDbItem) {
         await supabase
           .from('cart_items')
-          .update({ quantity: existingItem.quantity + item.quantity })
-          .eq('id', existingItem.id)
+          .update({ quantity: existingDbItem.quantity + item.quantity })
+          .eq('id', existingDbItem.id)
       } else {
         await supabase
           .from('cart_items')
@@ -376,10 +163,115 @@ export const useCartStore = create<CartStore>((set, get) => ({
             quantity: item.quantity,
           })
       }
+
+      // Refresh cart from database
+      await get().fetchCart()
+    } catch (e) {
+      console.log('Database add failed:', e)
+    }
+  },
+
+  removeItem: async (variantId) => {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return
+
+    try {
+      const { data: cart } = await supabase
+        .from('carts')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (!cart) return
+
+      await supabase
+        .from('cart_items')
+        .delete()
+        .eq('cart_id', cart.id)
+        .eq('variant_id', variantId)
+
+      await get().fetchCart()
+    } catch (e) {
+      console.log('Database remove failed:', e)
+    }
+  },
+
+  updateQuantity: async (variantId, quantity) => {
+    if (quantity <= 0) {
+      await get().removeItem(variantId)
+      return
     }
 
-    // Clear local storage and refresh cart
-    get().clearLocalStorage()
-    await get().fetchCart()
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return
+
+    try {
+      const { data: cart } = await supabase
+        .from('carts')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (!cart) return
+
+      const { data: cartItem } = await supabase
+        .from('cart_items')
+        .select('*')
+        .eq('cart_id', cart.id)
+        .eq('variant_id', variantId)
+        .maybeSingle()
+
+      if (cartItem) {
+        await supabase
+          .from('cart_items')
+          .update({ quantity })
+          .eq('id', cartItem.id)
+      }
+
+      await get().fetchCart()
+    } catch (e) {
+      console.log('Database update failed:', e)
+    }
+  },
+
+  clearCart: async () => {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    set({ items: [] })
+
+    if (!user) return
+
+    try {
+      const { data: cart } = await supabase
+        .from('carts')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (cart) {
+        await supabase
+          .from('cart_items')
+          .delete()
+          .eq('cart_id', cart.id)
+      }
+    } catch (e) {
+      console.log('Database clear failed:', e)
+    }
+  },
+
+  getTotal: () => {
+    return get().items.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    )
+  },
+
+  getItemCount: () => {
+    return get().items.reduce((count, item) => count + item.quantity, 0)
   },
 }))

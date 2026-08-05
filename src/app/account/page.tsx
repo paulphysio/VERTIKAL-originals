@@ -162,7 +162,7 @@ export default function AccountPage() {
           </div>
         </div>
         <p className="mt-4 font-mono text-sm text-ink/70">
-          Earn 1 point for every ₦10 spent. Redeem points at checkout for discounts.
+          Earn 1 point for every ₦10 spent.
         </p>
       </div>
     </div>

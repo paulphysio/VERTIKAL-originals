@@ -1,6 +1,6 @@
 import { login } from '@/lib/actions/auth'
 import Link from 'next/link'
-import { Suspense } from 'react'
+import { Suspense, use } from 'react'
 
 function LoginForm({ searchParams }: { searchParams: { error?: string } }) {
   return (
@@ -18,6 +18,7 @@ function LoginForm({ searchParams }: { searchParams: { error?: string } }) {
 
         {searchParams.error && (
           <div className="border-2 border-coral bg-coral/10 p-4">
+            <p className="font-mono text-sm text-coral font-bold uppercase mb-1">Error</p>
             <p className="font-mono text-sm text-coral">{decodeURIComponent(searchParams.error)}</p>
           </div>
         )}
@@ -82,9 +83,10 @@ export default function LoginPage({
 }: {
   searchParams: Promise<{ error?: string }>
 }) {
+  const params = use(searchParams)
   return (
     <Suspense fallback={<LoginForm searchParams={{}} />}>
-      <LoginForm searchParams={searchParams as { error?: string }} />
+      <LoginForm searchParams={params as { error?: string }} />
     </Suspense>
   )
 }

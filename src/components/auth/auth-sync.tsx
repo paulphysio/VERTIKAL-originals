@@ -7,7 +7,7 @@ export default function AuthSync() {
   const supabase = createClient()
 
   useEffect(() => {
-    let hasMerged = false
+    let hasSynced = false
 
     const syncOnAuthChange = async () => {
       const { useCartStore } = await import('@/lib/store/cart')
@@ -18,16 +18,16 @@ export default function AuthSync() {
       
       const { data: { user } } = await supabase.auth.getUser()
       
-      if (user && !hasMerged) {
-        // User is authenticated, merge guest data
-        await cartStore.mergeGuestCart()
-        await wishlistStore.mergeGuestWishlist()
-        hasMerged = true
+      if (user && !hasSynced) {
+        // User is authenticated, fetch from database
+        await cartStore.fetchCart()
+        await wishlistStore.fetchWishlist()
+        hasSynced = true
       } else if (!user) {
-        // User is logged out, load from localStorage
-        cartStore.loadFromLocalStorage()
-        wishlistStore.loadFromLocalStorage()
-        hasMerged = false
+        // User is logged out, clear local state
+        cartStore.clearCart()
+        wishlistStore.clearWishlist()
+        hasSynced = false
       }
     }
 
@@ -44,13 +44,13 @@ export default function AuthSync() {
         const wishlistStore = useWishlistStore.getState()
         
         if (event === 'SIGNED_IN' && session?.user) {
-          await cartStore.mergeGuestCart()
-          await wishlistStore.mergeGuestWishlist()
-          hasMerged = true
+          await cartStore.fetchCart()
+          await wishlistStore.fetchWishlist()
+          hasSynced = true
         } else if (event === 'SIGNED_OUT') {
-          cartStore.loadFromLocalStorage()
-          wishlistStore.loadFromLocalStorage()
-          hasMerged = false
+          cartStore.clearCart()
+          wishlistStore.clearWishlist()
+          hasSynced = false
         }
       }
     )
