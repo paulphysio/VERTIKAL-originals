@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { sendWelcomeEmail } from '@/lib/email/send-email'
+import { logEvent } from '@/lib/events'
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
@@ -13,10 +14,22 @@ export async function login(formData: FormData) {
     password: formData.get('password') as string,
   }
 
-  const { error } = await supabase.auth.signInWithPassword(data)
+  const { data: authData, error } = await supabase.auth.signInWithPassword(data)
 
   if (error) {
     redirect(`/login?error=${encodeURIComponent(error.message)}`)
+  }
+
+  // Track sign_in event (server-side)
+  if (authData.user) {
+    await logEvent({
+      event_type: 'sign_in',
+      user_id: authData.user.id,
+      metadata: {
+        email: data.email,
+        method: 'email_password',
+      },
+    })
   }
 
   revalidatePath('/', 'layout')
@@ -30,7 +43,7 @@ export async function signup(formData: FormData) {
   const password = formData.get('password') as string
   const fullName = formData.get('fullName') as string
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -43,6 +56,19 @@ export async function signup(formData: FormData) {
 
   if (error) {
     redirect(`/register?error=${encodeURIComponent(error.message)}`)
+  }
+
+  // Track sign_up event (server-side)
+  if (data.user) {
+    await logEvent({
+      event_type: 'sign_up',
+      user_id: data.user.id,
+      metadata: {
+        email: email,
+        full_name: fullName,
+        method: 'email_password',
+      },
+    })
   }
 
   // Send welcome email

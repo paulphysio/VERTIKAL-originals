@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getFeaturedProducts, getTopCategories } from "@/lib/queries";
+import { getAllProducts, getTopCategories } from "@/lib/queries";
 import HeroSketch from "@/components/hero/sketch-hero";
 import CategoryTape from "@/components/layout/category-tape";
 import ProductCard from "@/components/product/product-card";
@@ -8,7 +8,7 @@ import JoinList from "@/components/layout/join-list";
 
 export default async function HomePage() {
   const [products, categories] = await Promise.all([
-    getFeaturedProducts(8),
+    getAllProducts(),
     getTopCategories(),
   ]);
   // eslint-disable-next-line react-hooks/purity -- Server Component, runs once per request, never re-renders on the client
@@ -70,16 +70,10 @@ export default async function HomePage() {
 
       <CategoryTape categories={categories} />
 
-      <div className="flex items-baseline justify-between border-b-2 border-ink px-4 py-8 sm:px-10 sm:py-10">
+      <div className="px-4 py-8 sm:px-10 sm:py-10 border-b-2 border-ink">
         <h2 className="font-display text-3xl uppercase sm:text-5xl">
           Shop the collection
         </h2>
-        <Link
-          href="/products"
-          className="border-b-2 border-ink pb-0.5 font-mono text-[11px] font-bold sm:text-xs"
-        >
-          View all →
-        </Link>
       </div>
 
       <div className="grid grid-cols-2 border-b-2 border-ink lg:grid-cols-4">

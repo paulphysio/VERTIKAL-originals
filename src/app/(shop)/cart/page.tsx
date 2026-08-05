@@ -4,23 +4,48 @@ import { useState, useEffect } from 'react'
 import { useCartStore } from '@/lib/store/cart'
 import { formatPrice } from '@/lib/utils'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { getSettings } from '@/lib/actions/settings'
+import { getShippingZones } from '@/lib/queries'
 
 export default function CartPage() {
+  const router = useRouter()
   const { items, updateQuantity, removeItem, getTotal, clearCart, fetchCart, loading } = useCartStore()
   const [settings, setSettings] = useState<any>(null)
+  const [shippingZones, setShippingZones] = useState<any[]>([])
+  const [selectedZone, setSelectedZone] = useState<string>('')
 
   useEffect(() => {
     fetchCart()
   }, [fetchCart])
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      const settingsData = await getSettings()
+    const fetchData = async () => {
+      const [settingsData, zonesData] = await Promise.all([
+        getSettings(),
+        getShippingZones()
+      ])
       setSettings(settingsData)
+      setShippingZones(zonesData)
+      // Load saved zone from localStorage or select first
+      const savedZone = localStorage.getItem('selected_shipping_zone')
+      if (savedZone && zonesData.find(z => z.id === savedZone)) {
+        setSelectedZone(savedZone)
+      } else if (zonesData.length > 0) {
+        setSelectedZone(zonesData[0].id)
+      }
     }
-    fetchSettings()
+    fetchData()
   }, [])
+
+  // Save selected zone to localStorage when it changes
+  useEffect(() => {
+    if (selectedZone) {
+      localStorage.setItem('selected_shipping_zone', selectedZone)
+    }
+  }, [selectedZone])
+
+  const selectedZoneData = shippingZones.find(z => z.id === selectedZone)
 
   if (loading) {
     return (
@@ -126,9 +151,29 @@ export default function CartPage() {
           <div className="border-2 border-ink p-6 sticky top-24">
             <h2 className="font-display text-2xl uppercase mb-6">ORDER SUMMARY</h2>
 
+            {/* Shipping Zone Selection */}
+            <div className="mb-6">
+              <label className="block font-mono text-[11px] font-bold uppercase mb-2">Shipping Zone</label>
+              <select
+                value={selectedZone}
+                onChange={(e) => setSelectedZone(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral bg-paper"
+              >
+                {shippingZones.length === 0 ? (
+                  <option value="">No zones available</option>
+                ) : (
+                  shippingZones.map((zone) => (
+                    <option key={zone.id} value={zone.id}>
+                      {zone.name} - ₦{zone.fee?.toLocaleString()}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+
             {(() => {
-              const subtotal = getTotal()
-              const shippingFee = settings?.shippingFee ? Number(settings.shippingFee) : 1000
+              const subtotal = Number(getTotal())
+              const shippingFee = Number(selectedZoneData?.fee) || Number(settings?.shippingFee) || 1000
               const shipping = shippingFee
               const total = subtotal + shipping
 
@@ -140,7 +185,7 @@ export default function CartPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-ink/70">SHIPPING</span>
-                    <span>₦{shipping.toLocaleString()}</span>
+                    <span>₦{Math.round(shipping).toLocaleString()}</span>
                   </div>
                   <div className="border-t-2 border-ink pt-4 flex justify-between font-bold text-base">
                     <span>TOTAL</span>

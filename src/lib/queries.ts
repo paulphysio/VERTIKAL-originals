@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 import type { Category, Product } from "@/lib/types";
 
 const PRODUCT_SELECT = `
@@ -33,6 +33,63 @@ export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
   console.log("First product images:", data[0]?.product_images);
   return data as unknown as Product[];
 }
+
+export async function getAllProducts(): Promise<Product[]> {
+  const supabase = await createClient();
+  
+  // First get featured products
+  const { data: featuredData, error: featuredError } = await supabase
+    .from("products")
+    .select(PRODUCT_SELECT)
+    .eq("is_active", true)
+    .eq("is_featured", true)
+    .order("created_at", { ascending: false });
+
+  if (featuredError) {
+    console.error("Error fetching featured products:", featuredError);
+    return [];
+  }
+
+  // Then get non-featured products
+  const { data: nonFeaturedData, error: nonFeaturedError } = await supabase
+    .from("products")
+    .select(PRODUCT_SELECT)
+    .eq("is_active", true)
+    .eq("is_featured", false)
+    .order("created_at", { ascending: false });
+
+  if (nonFeaturedError) {
+    console.error("Error fetching non-featured products:", nonFeaturedError);
+    return [];
+  }
+
+  // Combine: featured first, then non-featured
+  const allProducts = [
+    ...(featuredData || []),
+    ...(nonFeaturedData || [])
+  ];
+
+  return allProducts as unknown as Product[];
+}
+
+export async function getShippingZones() {
+  const supabase = await createClient();
+  
+  const { data, error } = await supabase
+    .from("shipping_zones")
+    .select("*")
+    .order("name", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching shipping zones:", error);
+    console.error("Error details:", JSON.stringify(error, null, 2));
+    return [];
+  }
+
+  // Filter for active zones on the client side
+  return (data || []).filter(zone => zone.is_active !== false);
+}
+
 
 export async function getTopCategories(): Promise<Category[]> {
   const supabase = await createClient();

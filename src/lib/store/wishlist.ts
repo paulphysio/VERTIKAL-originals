@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { createClient } from '@/lib/supabase/client'
+import { trackEvent } from '@/lib/analytics'
 
 export interface WishlistItem {
   id: string
@@ -94,6 +95,13 @@ export const useWishlistStore = create<WishlistStore>((set, get) => ({
   addItem: async (item) => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
+    
+    // Track favorite event
+    trackEvent('favorite', {
+      product_id: item.productId,
+      product_name: item.name,
+      price: item.price,
+    })
     
     if (!user) {
       // Fallback to localStorage for non-authenticated users

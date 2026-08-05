@@ -8,6 +8,8 @@ import { CreditCard, Upload, Check } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { sendOrderConfirmation, sendNewOrderNotification } from '@/lib/actions/email'
 import { getSettings } from '@/lib/actions/settings'
+import { getShippingZones } from '@/lib/queries'
+import { trackEvent } from '@/lib/analytics'
 
 declare global {
   interface Window {
@@ -25,6 +27,8 @@ export default function CheckoutPage() {
   const [receiptFile, setReceiptFile] = useState<File | null>(null)
   const [paystackLoaded, setPaystackLoaded] = useState(false)
   const [settings, setSettings] = useState<any>(null)
+  const [shippingZones, setShippingZones] = useState<any[]>([])
+  const [selectedZone, setSelectedZone] = useState<string>('')
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -36,17 +40,29 @@ export default function CheckoutPage() {
     notes: '',
   })
 
-  // Fetch settings
+  // Fetch settings and shipping zones
   useEffect(() => {
-    const fetchSettings = async () => {
-      const settingsData = await getSettings()
+    const fetchData = async () => {
+      const [settingsData, zonesData] = await Promise.all([
+        getSettings(),
+        getShippingZones()
+      ])
       setSettings(settingsData)
+      setShippingZones(zonesData)
+      // Load selected zone from localStorage (set in cart page)
+      const savedZone = localStorage.getItem('selected_shipping_zone')
+      if (savedZone && zonesData.find(z => z.id === savedZone)) {
+        setSelectedZone(savedZone)
+      } else if (zonesData.length > 0) {
+        setSelectedZone(zonesData[0].id)
+      }
     }
-    fetchSettings()
+    fetchData()
   }, [])
 
-  const subtotal = getTotal()
-  const shippingFee = settings?.shippingFee ? Number(settings.shippingFee) : 1000
+  const subtotal = Number(getTotal())
+  const selectedZoneData = shippingZones.find(z => z.id === selectedZone)
+  const shippingFee = Number(selectedZoneData?.fee) || Number(settings?.shippingFee) || 1000
   const shipping = shippingFee
   const total = subtotal + shipping
 
@@ -103,13 +119,34 @@ export default function CheckoutPage() {
           total,
           payment_method: 'paystack',
           payment_status: 'pending',
-          shipping_address: formData,
+          shipping_address: {
+            ...formData,
+            shipping_zone_id: selectedZone,
+            shipping_zone_name: selectedZoneData?.name,
+          },
           notes: formData.notes,
         })
         .select()
         .single()
 
       if (orderError) throw orderError
+
+      // Track purchase event
+      trackEvent('purchase', {
+        order_id: order.id,
+        total: total,
+        payment_method: 'paystack',
+        item_count: items.length,
+        items: items.map(item => ({
+          product_id: item.productId,
+          product_name: item.name,
+          variant_id: item.variantId,
+          size: item.size,
+          color: item.color,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+      })
 
       // Create order items
       const orderItems = items.map(item => ({
@@ -223,7 +260,11 @@ export default function CheckoutPage() {
           payment_method: 'bank_transfer',
           payment_status: 'pending',
           receipt_url: publicUrl,
-          shipping_address: formData,
+          shipping_address: {
+            ...formData,
+            shipping_zone_id: selectedZone,
+            shipping_zone_name: selectedZoneData?.name,
+          },
           notes: formData.notes,
         })
         .select()
@@ -289,6 +330,15 @@ export default function CheckoutPage() {
           {/* Shipping Information */}
           <div className="border-2 border-ink p-6">
             <h2 className="font-display text-2xl uppercase mb-6">SHIPPING INFORMATION</h2>
+            
+            {/* Selected Shipping Zone (read-only) */}
+            <div className="mb-6 p-4 bg-concrete/20 border-2 border-ink">
+              <p className="font-mono text-[11px] font-bold uppercase mb-1">Selected Shipping Zone</p>
+              <p className="font-mono text-sm">
+                {selectedZoneData?.name || 'Default'} - ₦{selectedZoneData?.fee?.toLocaleString() || settings?.shippingFee?.toLocaleString() || '1,000'}
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block font-mono text-[11px] font-bold uppercase mb-2">Full Name</label>
@@ -460,7 +510,7 @@ export default function CheckoutPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-ink/70">SHIPPING</span>
-                <span>{shipping === 0 ? 'FREE' : '₦1,000'}</span>
+                <span>{shipping === 0 ? 'FREE' : `₦${Math.round(shipping).toLocaleString()}`}</span>
               </div>
               <div className="border-t-2 border-ink pt-4 flex justify-between font-bold text-base">
                 <span>TOTAL</span>

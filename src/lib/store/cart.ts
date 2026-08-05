@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { createClient } from '@/lib/supabase/client'
+import { trackEvent } from '@/lib/analytics'
 
 export interface CartItem {
   id: string
@@ -129,6 +130,17 @@ export const useCartStore = create<CartStore>((set, get) => ({
   addItem: async (item) => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
+    
+    // Track add_to_cart event
+    trackEvent('add_to_cart', {
+      product_id: item.productId,
+      product_name: item.name,
+      variant_id: item.variantId,
+      size: item.size,
+      color: item.color,
+      price: item.price,
+      quantity: item.quantity,
+    })
     
     // Always use localStorage for now (database issue)
     const existingItem = get().items.find((i) => i.variantId === item.variantId)
