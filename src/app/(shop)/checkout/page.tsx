@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation'
 import { sendOrderConfirmation, sendNewOrderNotification } from '@/lib/actions/email'
 import { getSettings } from '@/lib/actions/settings'
 import { getShippingZones } from '@/lib/queries'
-import { trackEvent } from '@/lib/analytics'
+import { trackClientEvent } from '@/lib/actions/events'
 
 declare global {
   interface Window {
@@ -131,21 +131,17 @@ export default function CheckoutPage() {
 
       if (orderError) throw orderError
 
-      // Track purchase event
-      trackEvent('purchase', {
-        order_id: order.id,
-        total: total,
-        payment_method: 'paystack',
-        item_count: items.length,
-        items: items.map(item => ({
-          product_id: item.productId,
-          product_name: item.name,
-          variant_id: item.variantId,
-          size: item.size,
-          color: item.color,
-          price: item.price,
-          quantity: item.quantity,
-        })),
+      // Track purchase event to Supabase events table (via server action)
+      await trackClientEvent({
+        event_type: 'purchase',
+        user_id: user.id,
+        metadata: {
+          order_id: order.id,
+          total: total,
+          payment_method: 'paystack',
+          item_count: items.length,
+        },
+        path: window.location.pathname,
       })
 
       // Create order items

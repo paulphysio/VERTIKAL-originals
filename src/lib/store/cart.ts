@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { createClient } from '@/lib/supabase/client'
-import { trackEvent } from '@/lib/analytics'
+import { trackClientEvent } from '@/lib/actions/events'
 
 export interface CartItem {
   id: string
@@ -131,15 +131,20 @@ export const useCartStore = create<CartStore>((set, get) => ({
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     
-    // Track add_to_cart event
-    trackEvent('add_to_cart', {
-      product_id: item.productId,
-      product_name: item.name,
-      variant_id: item.variantId,
-      size: item.size,
-      color: item.color,
-      price: item.price,
-      quantity: item.quantity,
+    // Track add_to_cart event to Supabase events table (via server action)
+    await trackClientEvent({
+      event_type: 'add_to_cart',
+      user_id: user?.id,
+      metadata: {
+        product_id: item.productId,
+        product_name: item.name,
+        variant_id: item.variantId,
+        size: item.size,
+        color: item.color,
+        price: item.price,
+        quantity: item.quantity,
+      },
+      path: window.location.pathname,
     })
     
     // Always use localStorage for now (database issue)

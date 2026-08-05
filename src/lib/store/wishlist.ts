@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { createClient } from '@/lib/supabase/client'
-import { trackEvent } from '@/lib/analytics'
+import { trackClientEvent } from '@/lib/actions/events'
 
 export interface WishlistItem {
   id: string
@@ -96,11 +96,16 @@ export const useWishlistStore = create<WishlistStore>((set, get) => ({
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     
-    // Track favorite event
-    trackEvent('favorite', {
-      product_id: item.productId,
-      product_name: item.name,
-      price: item.price,
+    // Track favorite event to Supabase events table (via server action)
+    await trackClientEvent({
+      event_type: 'favorite',
+      user_id: user?.id,
+      metadata: {
+        product_id: item.productId,
+        product_name: item.name,
+        price: item.price,
+      },
+      path: window.location.pathname,
     })
     
     if (!user) {
