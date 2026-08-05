@@ -3,19 +3,32 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Plus, Edit, Trash2, MapPin } from 'lucide-react'
+import { getAllStates, getLocalGovernments, getCities } from 'nigeria-geodata'
 
 export default function AdminShippingZonesPage() {
   const [zones, setZones] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingZone, setEditingZone] = useState<any>(null)
+  const [selectedState, setSelectedState] = useState<string>('')
+  const [selectedLga, setSelectedLga] = useState<string>('')
   const [formData, setFormData] = useState({
     name: '',
-    states: '',
+    country: 'Nigeria',
+    state: '',
+    lga: '',
     fee: '0',
-    estimated_days: '3-5',
+    delivery_time_min: '3',
+    delivery_time_max: '5',
+    is_active: true,
   })
   const supabase = createClient()
+  
+  // Get Nigerian states from nigeria-geodata
+  const states = getAllStates()
+  
+  // Get LGAs for selected state using nigeria-geodata
+  const lgas = selectedState ? getLocalGovernments(selectedState) : []
 
   useEffect(() => {
     fetchZones()
@@ -40,9 +53,13 @@ export default function AdminShippingZonesPage() {
 
     const zoneData = {
       name: formData.name,
-      states: formData.states.split(',').map(s => s.trim()).filter(Boolean),
+      country: formData.country,
+      state: formData.state,
+      lga: formData.lga,
       fee: Number(formData.fee),
-      estimated_days: formData.estimated_days,
+      delivery_time_min: Number(formData.delivery_time_min),
+      delivery_time_max: Number(formData.delivery_time_max),
+      is_active: formData.is_active,
     }
 
     let error
@@ -62,7 +79,7 @@ export default function AdminShippingZonesPage() {
     if (!error) {
       setShowModal(false)
       setEditingZone(null)
-      setFormData({ name: '', states: '', fee: '0', estimated_days: '3-5' })
+      setFormData({ name: '', country: 'Nigeria', state: '', lga: '', fee: '0', delivery_time_min: '3', delivery_time_max: '5', is_active: true })
       fetchZones()
     } else {
       alert(`Failed to save shipping zone: ${error.message}`)
@@ -72,11 +89,17 @@ export default function AdminShippingZonesPage() {
 
   const handleEdit = (zone: any) => {
     setEditingZone(zone)
+    setSelectedState(zone.state || '')
+    setSelectedLga(zone.lga || '')
     setFormData({
       name: zone.name,
-      states: Array.isArray(zone.states) ? zone.states.join(', ') : zone.states || '',
+      country: zone.country || 'Nigeria',
+      state: zone.state || '',
+      lga: zone.lga || '',
       fee: zone.fee.toString(),
-      estimated_days: zone.estimated_days,
+      delivery_time_min: zone.delivery_time_min?.toString() || '3',
+      delivery_time_max: zone.delivery_time_max?.toString() || '5',
+      is_active: zone.is_active ?? true,
     })
     setShowModal(true)
   }
@@ -98,7 +121,9 @@ export default function AdminShippingZonesPage() {
 
   const handleAdd = () => {
     setEditingZone(null)
-    setFormData({ name: '', states: '', fee: '0', estimated_days: '3-5' })
+    setSelectedState('')
+    setSelectedLga('')
+    setFormData({ name: '', country: 'Nigeria', state: '', lga: '', fee: '0', delivery_time_min: '3', delivery_time_max: '5', is_active: true })
     setShowModal(true)
   }
 
@@ -137,13 +162,18 @@ export default function AdminShippingZonesPage() {
                   <div className="flex items-center gap-3 mb-2">
                     <MapPin className="h-5 w-5 text-ink/50" />
                     <h3 className="font-display text-xl uppercase">{zone.name}</h3>
+                    {!zone.is_active && (
+                      <span className="px-2 py-1 bg-concrete text-ink/50 font-mono text-[10px] uppercase">Inactive</span>
+                    )}
                   </div>
                   <p className="font-mono text-sm text-ink/70 mb-2">
-                    States: {Array.isArray(zone.states) ? zone.states.join(', ') : zone.states || 'N/A'}
+                    {zone.country} {zone.state && `• ${zone.state}`} {zone.city && `• ${zone.city}`}
                   </p>
                   <div className="flex gap-4 font-mono text-sm">
                     <span className="text-coral font-bold">₦{zone.fee.toLocaleString()}</span>
-                    <span className="text-ink/50">{zone.estimated_days} days</span>
+                    <span className="text-ink/50">
+                      {zone.delivery_time_min}-{zone.delivery_time_max} days
+                    </span>
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -169,7 +199,7 @@ export default function AdminShippingZonesPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-ink/80 flex items-center justify-center p-4 z-50">
-          <div className="bg-paper border-2 border-ink w-full max-w-lg">
+          <div className="bg-paper border-2 border-ink w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <h2 className="font-display text-2xl uppercase mb-6">
                 {editingZone ? 'EDIT ZONE' : 'ADD ZONE'}
@@ -186,15 +216,57 @@ export default function AdminShippingZonesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block font-mono text-[11px] font-bold uppercase mb-2">States (comma separated)</label>
+                  <label className="block font-mono text-[11px] font-bold uppercase mb-2">Country</label>
                   <input
                     type="text"
-                    value={formData.states}
-                    onChange={(e) => setFormData({ ...formData, states: e.target.value })}
-                    placeholder="Lagos, Abuja, Port Harcourt"
+                    value={formData.country}
+                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                     className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral"
                     required
                   />
+                </div>
+                <div>
+                  <label className="block font-mono text-[11px] font-bold uppercase mb-2">State/Region</label>
+                  <select
+                    value={formData.state}
+                    onChange={(e) => {
+                      const newState = e.target.value
+                      setSelectedState(newState)
+                      setSelectedLga('')
+                      setFormData({ ...formData, state: newState, lga: '' })
+                    }}
+                    className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral"
+                    required
+                  >
+                    <option value="">Select State</option>
+                    {states.map((state: any, index: number) => {
+                      const stateName = typeof state === 'string' ? state : state.state || state.name
+                      return (
+                        <option key={index} value={stateName}>
+                          {stateName}
+                        </option>
+                      )
+                    })}
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-mono text-[11px] font-bold uppercase mb-2">LGA (Optional)</label>
+                  <select
+                    value={formData.lga}
+                    onChange={(e) => {
+                      const newLga = e.target.value
+                      setSelectedLga(newLga)
+                      setFormData({ ...formData, lga: newLga, name: newLga || formData.name })
+                    }}
+                    className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral"
+                  >
+                    <option value="">Select LGA</option>
+                    {lgas.map((lga: string) => (
+                      <option key={lga} value={lga}>
+                        {lga}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block font-mono text-[11px] font-bold uppercase mb-2">Shipping Fee (₦)</label>
@@ -206,16 +278,37 @@ export default function AdminShippingZonesPage() {
                     required
                   />
                 </div>
-                <div>
-                  <label className="block font-mono text-[11px] font-bold uppercase mb-2">Estimated Delivery Days</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-mono text-[11px] font-bold uppercase mb-2">Min Delivery (days)</label>
+                    <input
+                      type="number"
+                      value={formData.delivery_time_min}
+                      onChange={(e) => setFormData({ ...formData, delivery_time_min: e.target.value })}
+                      className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-mono text-[11px] font-bold uppercase mb-2">Max Delivery (days)</label>
+                    <input
+                      type="number"
+                      value={formData.delivery_time_max}
+                      onChange={(e) => setFormData({ ...formData, delivery_time_max: e.target.value })}
+                      className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
                   <input
-                    type="text"
-                    value={formData.estimated_days}
-                    onChange={(e) => setFormData({ ...formData, estimated_days: e.target.value })}
-                    placeholder="3-5"
-                    className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral"
-                    required
+                    type="checkbox"
+                    id="is_active"
+                    checked={formData.is_active}
+                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                    className="w-5 h-5 border-2 border-ink"
                   />
+                  <label htmlFor="is_active" className="font-mono text-sm">Active</label>
                 </div>
                 <div className="flex gap-3 pt-4">
                   <button

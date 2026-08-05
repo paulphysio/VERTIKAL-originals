@@ -7,13 +7,17 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { getSettings } from '@/lib/actions/settings'
 import { getShippingZones } from '@/lib/queries'
+import { getAllStates, getLocalGovernments, getCities } from 'nigeria-geodata'
 
 export default function CartPage() {
   const router = useRouter()
   const { items, updateQuantity, removeItem, getTotal, clearCart, fetchCart, loading } = useCartStore()
   const [settings, setSettings] = useState<any>(null)
   const [shippingZones, setShippingZones] = useState<any[]>([])
-  const [selectedZone, setSelectedZone] = useState<string>('')
+  const [selectedCountry, setSelectedCountry] = useState<string>('Nigeria')
+  const [selectedState, setSelectedState] = useState<string>('')
+  const [selectedLga, setSelectedLga] = useState<string>('')
+  const [selectedCity, setSelectedCity] = useState<string>('')
 
   useEffect(() => {
     fetchCart()
@@ -27,25 +31,46 @@ export default function CartPage() {
       ])
       setSettings(settingsData)
       setShippingZones(zonesData)
-      // Load saved zone from localStorage or select first
-      const savedZone = localStorage.getItem('selected_shipping_zone')
-      if (savedZone && zonesData.find(z => z.id === savedZone)) {
-        setSelectedZone(savedZone)
-      } else if (zonesData.length > 0) {
-        setSelectedZone(zonesData[0].id)
+      // Load saved location from localStorage
+      const savedLocation = localStorage.getItem('selected_shipping_location')
+      if (savedLocation) {
+        try {
+          const location = JSON.parse(savedLocation)
+          setSelectedCountry(location.country || 'Nigeria')
+          setSelectedState(location.state || '')
+          setSelectedLga(location.lga || '')
+          setSelectedCity(location.city || '')
+        } catch (e) {
+          console.error('Error parsing saved location:', e)
+        }
       }
     }
     fetchData()
   }, [])
 
-  // Save selected zone to localStorage when it changes
+  // Save selected location to localStorage when it changes
   useEffect(() => {
-    if (selectedZone) {
-      localStorage.setItem('selected_shipping_zone', selectedZone)
+    if (selectedState || selectedLga) {
+      localStorage.setItem('selected_shipping_location', JSON.stringify({
+        country: selectedCountry,
+        state: selectedState,
+        lga: selectedLga,
+        city: selectedCity
+      }))
     }
-  }, [selectedZone])
+  }, [selectedCountry, selectedState, selectedLga, selectedCity])
 
-  const selectedZoneData = shippingZones.find(z => z.id === selectedZone)
+  // Get states, LGAs, and cities
+  const states = getAllStates()
+  const lgas = selectedState ? getLocalGovernments(selectedState) : []
+  const cities = selectedState && selectedLga ? getCities(selectedState, selectedLga) : []
+
+  // Find matching shipping zone based on Country + State + LGA
+  const selectedZoneData = shippingZones.find(z => 
+    z.country === selectedCountry && 
+    z.state === selectedState && 
+    z.lga === selectedLga
+  )
 
   if (loading) {
     return (
@@ -151,24 +176,88 @@ export default function CartPage() {
           <div className="border-2 border-ink p-6 sticky top-24">
             <h2 className="font-display text-2xl uppercase mb-6">ORDER SUMMARY</h2>
 
-            {/* Shipping Zone Selection */}
-            <div className="mb-6">
-              <label className="block font-mono text-[11px] font-bold uppercase mb-2">Shipping Zone</label>
+            {/* Shipping Location Selection */}
+            <div className="mb-6 space-y-3">
+              <label className="block font-mono text-[11px] font-bold uppercase mb-2">Select Your Location</label>
+              
               <select
-                value={selectedZone}
-                onChange={(e) => setSelectedZone(e.target.value)}
+                value={selectedCountry}
+                onChange={(e) => {
+                  setSelectedCountry(e.target.value)
+                  setSelectedState('')
+                  setSelectedLga('')
+                  setSelectedCity('')
+                }}
                 className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral bg-paper"
               >
-                {shippingZones.length === 0 ? (
-                  <option value="">No zones available</option>
-                ) : (
-                  shippingZones.map((zone) => (
-                    <option key={zone.id} value={zone.id}>
-                      {zone.name} - ₦{zone.fee?.toLocaleString()}
-                    </option>
-                  ))
-                )}
+                <option value="Nigeria">Nigeria</option>
               </select>
+
+              <select
+                value={selectedState}
+                onChange={(e) => {
+                  setSelectedState(e.target.value)
+                  setSelectedLga('')
+                  setSelectedCity('')
+                }}
+                className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral bg-paper"
+                disabled={!selectedCountry}
+              >
+                <option value="">Select State</option>
+                {states.map((state: any, index: number) => {
+                  const stateName = typeof state === 'string' ? state : state.state || state.name
+                  return (
+                    <option key={index} value={stateName}>
+                      {stateName}
+                    </option>
+                  )
+                })}
+              </select>
+
+              <select
+                value={selectedLga}
+                onChange={(e) => {
+                  setSelectedLga(e.target.value)
+                  setSelectedCity('')
+                }}
+                className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral bg-paper"
+                disabled={!selectedState}
+              >
+                <option value="">Select LGA</option>
+                {lgas.map((lga: string) => (
+                  <option key={lga} value={lga}>
+                    {lga}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={selectedCity}
+                onChange={(e) => setSelectedCity(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-ink font-mono text-sm focus:outline-none focus:border-coral bg-paper"
+                disabled={!selectedLga}
+              >
+                <option value="">Select City (Optional)</option>
+                {cities.map((city: string) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
+
+              {selectedZoneData && (
+                <div className="mt-2 font-mono text-[11px] text-ink/70">
+                  <span className="text-coral font-bold">₦{selectedZoneData.fee?.toLocaleString()}</span>
+                  {' • '}
+                  {selectedZoneData.delivery_time_min}-{selectedZoneData.delivery_time_max} days delivery
+                </div>
+              )}
+              
+              {!selectedZoneData && selectedLga && (
+                <div className="mt-2 font-mono text-[11px] text-coral">
+                  No shipping zone available for this LGA
+                </div>
+              )}
             </div>
 
             {(() => {

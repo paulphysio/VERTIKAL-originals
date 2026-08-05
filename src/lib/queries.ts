@@ -78,7 +78,8 @@ export async function getShippingZones() {
   const { data, error } = await supabase
     .from("shipping_zones")
     .select("*")
-    .order("name", { ascending: true });
+    .eq("is_active", true)
+    .order("country", { ascending: true });
 
   if (error) {
     console.error("Error fetching shipping zones:", error);
@@ -86,8 +87,7 @@ export async function getShippingZones() {
     return [];
   }
 
-  // Filter for active zones on the client side
-  return (data || []).filter(zone => zone.is_active !== false);
+  return data || [];
 }
 
 

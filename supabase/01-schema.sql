@@ -171,8 +171,16 @@ create table reviews (
 -- SHIPPING ZONES
 -- =====================================================
 create table shipping_zones (
-  id uuid primary key default uuid_generate_v4(),
-  name text,
-  fee decimal(10,2),
-  estimated_days text
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  country text not null default 'Nigeria',
+  state text not null,
+  lga text,
+  city text,
+  fee numeric not null default 0,
+  delivery_time_min integer not null default 3,
+  delivery_time_max integer not null default 5,
+  is_active boolean not null default true,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
